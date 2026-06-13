@@ -1,0 +1,50 @@
+name: Test basic usage - setup kubectl and helm
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            kubectl
+            helm
+          kubectl: '1.34.1'
+          helm: '3.19.0'
+      - name: Assert kubectl-path output is set
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "kubectl-path: $KUBECTL_PATH"
+          if [ -z "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl-path output is empty"
+            exit 1
+          fi
+          echo "PASS: kubectl-path=$KUBECTL_PATH"
+      - name: Assert helm-path output is set
+        env:
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+        run: |
+          echo "helm-path: $HELM_PATH"
+          if [ -z "$HELM_PATH" ]; then
+            echo "FAIL: helm-path output is empty"
+            exit 1
+          fi
+          echo "PASS: helm-path=$HELM_PATH"
+      - name: Assert kubectl is executable and correct version
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "Running kubectl version..."
+          "$KUBECTL_PATH" version --client --output=yaml
+          echo "PASS: kubectl is executable"
+      - name: Assert helm is executable
+        env:
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+        run: |
+          echo "Running helm version..."
+          "$HELM_PATH" version
+          echo "PASS: helm is executable"
