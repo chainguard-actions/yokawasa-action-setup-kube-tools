@@ -1,0 +1,13 @@
+export const defaultProcessorArchType = 'amd64'
+
+export const defaultKubectlVersion = '1.34.1'
+export const defaultKustomizeVersion = '5.7.1'
+export const defaultHelmVersion = '3.19.0'
+export const defaultKubevalVersion = '0.16.1'
+export const defaultKubeconformVersion = '0.7.0'
+export const defaultConftestVersion = '0.62.0'
+export const defaultYqVersion = '4.47.2'
+export const defaultRancherVersion = '2.12.1'
+export const defaultTiltVersion = '0.35.1'
+export const defaultSkaffoldVersion = '2.16.1'
+export const defaultKubeScoreVersion = '1.20.0'

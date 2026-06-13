@@ -1,0 +1,48 @@
+name: Test arch-type input with helm setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: helm
+          helm: '3.19.0'
+          arch-type: 'amd64'
+      - name: Assert helm-path output is set
+        env:
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+        run: |
+          echo "helm-path: $HELM_PATH"
+          if [ -z "$HELM_PATH" ]; then
+            echo "FAIL: helm-path output is empty"
+            exit 1
+          fi
+          echo "PASS: helm-path is set to $HELM_PATH"
+      - name: Assert helm binary exists and is executable
+        env:
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+        run: |
+          echo "Checking helm binary at: $HELM_PATH"
+          if [ ! -f "$HELM_PATH" ]; then
+            echo "FAIL: helm binary not found at $HELM_PATH"
+            exit 1
+          fi
+          if [ ! -x "$HELM_PATH" ]; then
+            echo "FAIL: helm binary is not executable"
+            exit 1
+          fi
+          echo "PASS: helm binary exists and is executable"
+      - name: Assert helm version
+        run: |
+          VERSION=$(helm version --short 2>/dev/null || helm version 2>&1)
+          echo "helm version: $VERSION"
+          if echo "$VERSION" | grep -q "3.19"; then
+            echo "PASS: helm version matches expected 3.19.x"
+          else
+            echo "FAIL: helm version does not match expected 3.19.x, got: $VERSION"
+            exit 1
+          fi
