@@ -1,0 +1,59 @@
+name: Test arch-type input - explicit amd64 architecture
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          arch-type: 'amd64'
+          setup-tools: |
+            kustomize
+            yq
+          kustomize: '5.8.1'
+          yq: '4.52.5'
+      - name: Assert kustomize-path output is set
+        env:
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+        run: |
+          echo "kustomize-path: $KUSTOMIZE_PATH"
+          if [ -z "$KUSTOMIZE_PATH" ]; then
+            echo "FAIL: kustomize-path output is empty"
+            exit 1
+          fi
+          echo "PASS: kustomize-path=$KUSTOMIZE_PATH"
+      - name: Assert yq-path output is set
+        env:
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "yq-path: $YQ_PATH"
+          if [ -z "$YQ_PATH" ]; then
+            echo "FAIL: yq-path output is empty"
+            exit 1
+          fi
+          echo "PASS: yq-path=$YQ_PATH"
+      - name: Assert kustomize is executable
+        env:
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+        run: |
+          echo "Checking kustomize at: $KUSTOMIZE_PATH"
+          if [ ! -x "$KUSTOMIZE_PATH" ]; then
+            echo "FAIL: kustomize binary is not executable at $KUSTOMIZE_PATH"
+            exit 1
+          fi
+          "$KUSTOMIZE_PATH" version
+          echo "PASS: kustomize is executable"
+      - name: Assert yq is executable
+        env:
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "Checking yq at: $YQ_PATH"
+          if [ ! -x "$YQ_PATH" ]; then
+            echo "FAIL: yq binary is not executable at $YQ_PATH"
+            exit 1
+          fi
+          "$YQ_PATH" --version
+          echo "PASS: yq is executable"
