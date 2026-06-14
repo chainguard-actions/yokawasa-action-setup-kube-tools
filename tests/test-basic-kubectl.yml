@@ -1,0 +1,41 @@
+name: Test basic kubectl setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: kubectl
+          kubectl: '1.35.3'
+      - name: Assert kubectl-path output is set
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "kubectl-path: $KUBECTL_PATH"
+          if [ -z "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl-path output is empty"
+            exit 1
+          fi
+          echo "PASS: kubectl-path is set to $KUBECTL_PATH"
+      - name: Assert kubectl binary exists and is executable
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "Checking kubectl at: $KUBECTL_PATH"
+          if [ ! -f "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl binary not found at $KUBECTL_PATH"
+            exit 1
+          fi
+          if [ ! -x "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl binary is not executable"
+            exit 1
+          fi
+          echo "PASS: kubectl binary exists and is executable"
+      - name: Assert kubectl version
+        run: |
+          kubectl version --client --output=yaml
+          echo "PASS: kubectl version command succeeded"

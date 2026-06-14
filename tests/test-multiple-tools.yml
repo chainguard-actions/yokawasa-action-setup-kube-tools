@@ -1,0 +1,54 @@
+name: Test multiple tools setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            helm
+            yq
+          helm: '3.20.1'
+          yq: '4.52.5'
+      - name: Assert helm-path output is set
+        env:
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+        run: |
+          echo "helm-path: $HELM_PATH"
+          if [ -z "$HELM_PATH" ]; then
+            echo "FAIL: helm-path output is empty"
+            exit 1
+          fi
+          echo "PASS: helm-path is set to $HELM_PATH"
+      - name: Assert yq-path output is set
+        env:
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "yq-path: $YQ_PATH"
+          if [ -z "$YQ_PATH" ]; then
+            echo "FAIL: yq-path output is empty"
+            exit 1
+          fi
+          echo "PASS: yq-path is set to $YQ_PATH"
+      - name: Assert helm binary works
+        run: |
+          helm version
+          echo "PASS: helm version command succeeded"
+      - name: Assert yq binary works
+        run: |
+          yq --version
+          echo "PASS: yq version command succeeded"
+      - name: Assert kubectl-path is empty when not requested
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "kubectl-path: '$KUBECTL_PATH'"
+          if [ -n "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl-path should be empty when kubectl not in setup-tools"
+            exit 1
+          fi
+          echo "PASS: kubectl-path is empty as expected"
