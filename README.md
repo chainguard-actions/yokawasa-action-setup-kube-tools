@@ -8,6 +8,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
+| v0.13.1 | [`v0.13.1`](https://github.com/chainguard-actions/yokawasa-action-setup-kube-tools/tree/v0.13.1) | [`3e3886c`](https://github.com/yokawasa/action-setup-kube-tools/commit/3e3886c11bfa25fe33f8eb90f59542dd151da442) |
 | v0.13.2 | [`v0.13.2`](https://github.com/chainguard-actions/yokawasa-action-setup-kube-tools/tree/v0.13.2) | [`e9417d7`](https://github.com/yokawasa/action-setup-kube-tools/commit/e9417d7e5e0ad29e33ea603f98cddbb46bdb6bcd) |
 | v0.13.3 | [`v0.13.3`](https://github.com/chainguard-actions/yokawasa-action-setup-kube-tools/tree/v0.13.3) | [`4710caf`](https://github.com/yokawasa/action-setup-kube-tools/commit/4710caf20bc62368b8edab32f7c9cc7dc3a2ac31) |
 | v0.13.4 | [`v0.13.4`](https://github.com/chainguard-actions/yokawasa-action-setup-kube-tools/tree/v0.13.4) | [`5778123`](https://github.com/yokawasa/action-setup-kube-tools/commit/5778123f7b071387e9c8e522492d8f39427dc6c7) |
