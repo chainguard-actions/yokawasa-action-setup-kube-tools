@@ -1,6 +1,11 @@
 {
   "owner": "yokawasa",
   "repo": "action-setup-kube-tools",
-  "version": "",
-  "url": "https://github.com/yokawasa/action-setup-kube-tools"
+  "version": "v0.13.1",
+  "commit_sha": "3e3886c11bfa25fe33f8eb90f59542dd151da442",
+  "url": "https://github.com/yokawasa/action-setup-kube-tools",
+  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
+  "test_agent_version": "1",
+  "harden_agent_version": "1"
 }
