@@ -1,0 +1,51 @@
+name: Test conftest and kube-score setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          arch-type: amd64
+          setup-tools: |
+            conftest
+            kube-score
+          conftest: '0.67.1'
+          kube-score: '1.20.0'
+      - name: Assert conftest-path is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.conftest-path }}
+        run: |
+          echo "conftest-path: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: conftest-path is empty"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert conftest binary works
+        env:
+          ACTUAL: ${{ steps.action.outputs.conftest-path }}
+        run: |
+          echo "Running conftest at: $ACTUAL"
+          "$ACTUAL" --version
+          echo "PASS"
+      - name: Assert kube-score-path is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.kube-score-path }}
+        run: |
+          echo "kube-score-path: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: kube-score-path is empty"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert kube-score binary works
+        env:
+          ACTUAL: ${{ steps.action.outputs.kube-score-path }}
+        run: |
+          echo "Running kube-score at: $ACTUAL"
+          "$ACTUAL" version
+          echo "PASS"

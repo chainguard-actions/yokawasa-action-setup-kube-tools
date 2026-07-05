@@ -1,0 +1,61 @@
+name: Test version-file input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create .tool-versions file
+        run: |
+          printf '# Kubernetes tools\nkubectl 1.29.0\nyq 4.40.5\n' > /tmp/test-tool-versions
+          echo "Created .tool-versions file:"
+          cat /tmp/test-tool-versions
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            kubectl
+            yq
+          version-file: '/tmp/test-tool-versions'
+          fail-fast: 'false'
+      - name: Assert kubectl is in PATH and executable
+        run: |
+          echo "Checking kubectl in PATH..."
+          if ! command -v kubectl &>/dev/null; then
+            echo "FAIL: kubectl not found in PATH"
+            exit 1
+          fi
+          echo "kubectl found at: $(which kubectl)"
+          kubectl version --client 2>&1 || true
+          echo "PASS: kubectl is in PATH"
+      - name: Assert yq is in PATH and executable
+        run: |
+          echo "Checking yq in PATH..."
+          if ! command -v yq &>/dev/null; then
+            echo "FAIL: yq not found in PATH"
+            exit 1
+          fi
+          echo "yq found at: $(which yq)"
+          yq --version 2>/dev/null || true
+          echo "PASS: yq is in PATH"
+      - name: Assert kubectl version matches version-file entry
+        run: |
+          echo "Testing kubectl version from version-file"
+          VERSION=$(kubectl version --client 2>&1 | grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 | sed 's/^v//')
+          echo "kubectl version: $VERSION"
+          if [ "$VERSION" != "1.29.0" ]; then
+            echo "FAIL: expected kubectl version 1.29.0, got $VERSION"
+            exit 1
+          fi
+          echo "PASS: kubectl version matches 1.29.0 from version-file"
+      - name: Assert yq version matches version-file entry
+        run: |
+          echo "Testing yq version from version-file"
+          VERSION=$(yq --version 2>/dev/null | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1)
+          echo "yq version: $VERSION"
+          if [ "$VERSION" != "4.40.5" ]; then
+            echo "FAIL: expected yq version 4.40.5, got $VERSION"
+            exit 1
+          fi
+          echo "PASS: yq version matches 4.40.5 from version-file"

@@ -1,0 +1,34 @@
+name: Test setup-tools with single tool (yq)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            yq
+          yq: '4.40.5'
+          fail-fast: 'false'
+      - name: Assert yq is in PATH and executable
+        run: |
+          echo "Checking yq in PATH..."
+          if ! command -v yq &>/dev/null; then
+            echo "FAIL: yq not found in PATH"
+            exit 1
+          fi
+          echo "yq found at: $(which yq)"
+          yq --version 2>/dev/null || true
+          echo "PASS: yq is in PATH"
+      - name: Assert yq version matches requested
+        run: |
+          VERSION=$(yq --version 2>/dev/null | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1)
+          echo "actual version: $VERSION"
+          if [ "$VERSION" != "4.40.5" ]; then
+            echo "FAIL: expected yq version 4.40.5, got $VERSION"
+            exit 1
+          fi
+          echo "PASS: yq version matches 4.40.5"

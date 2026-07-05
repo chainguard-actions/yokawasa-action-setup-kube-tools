@@ -1,0 +1,37 @@
+name: Test basic usage - install kubectl and helm
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            kubectl
+            helm
+          kubectl: '1.29.0'
+          helm: '3.14.0'
+          fail-fast: 'false'
+      - name: Assert kubectl is in PATH and executable
+        run: |
+          echo "Checking kubectl in PATH..."
+          if ! command -v kubectl &>/dev/null; then
+            echo "FAIL: kubectl not found in PATH"
+            exit 1
+          fi
+          echo "kubectl found at: $(which kubectl)"
+          kubectl version --client 2>&1 || true
+          echo "PASS: kubectl is in PATH"
+      - name: Assert helm is in PATH and executable
+        run: |
+          echo "Checking helm in PATH..."
+          if ! command -v helm &>/dev/null; then
+            echo "FAIL: helm not found in PATH"
+            exit 1
+          fi
+          echo "helm found at: $(which helm)"
+          helm version --short 2>/dev/null || true
+          echo "PASS: helm is in PATH"

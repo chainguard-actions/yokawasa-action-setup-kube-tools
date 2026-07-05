@@ -1,0 +1,88 @@
+name: Test kubeval, rancher, skaffold, and tilt setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            kubeval
+            rancher
+            skaffold
+            tilt
+          kubeval: '0.16.1'
+          rancher: '2.13.3'
+          skaffold: '2.18.1'
+          tilt: '0.37.0'
+      - name: Assert kubeval-path is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.kubeval-path }}
+        run: |
+          echo "kubeval-path: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: kubeval-path is empty"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert kubeval binary works
+        env:
+          ACTUAL: ${{ steps.action.outputs.kubeval-path }}
+        run: |
+          echo "Running kubeval at: $ACTUAL"
+          "$ACTUAL" --version
+          echo "PASS"
+      - name: Assert rancher-path is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.rancher-path }}
+        run: |
+          echo "rancher-path: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: rancher-path is empty"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert rancher binary works
+        env:
+          ACTUAL: ${{ steps.action.outputs.rancher-path }}
+        run: |
+          echo "Running rancher at: $ACTUAL"
+          "$ACTUAL" --version
+          echo "PASS"
+      - name: Assert skaffold-path is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.skaffold-path }}
+        run: |
+          echo "skaffold-path: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: skaffold-path is empty"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert skaffold binary works
+        env:
+          ACTUAL: ${{ steps.action.outputs.skaffold-path }}
+        run: |
+          echo "Running skaffold at: $ACTUAL"
+          "$ACTUAL" version
+          echo "PASS"
+      - name: Assert tilt-path is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.tilt-path }}
+        run: |
+          echo "tilt-path: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: tilt-path is empty"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert tilt binary works
+        env:
+          ACTUAL: ${{ steps.action.outputs.tilt-path }}
+        run: |
+          echo "Running tilt at: $ACTUAL"
+          "$ACTUAL" version
+          echo "PASS"
