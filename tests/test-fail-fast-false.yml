@@ -1,0 +1,23 @@
+name: Test fail-fast false with invalid version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Run action with invalid kubectl version and fail-fast false
+        id: action
+        uses: .
+        with:
+          fail-fast: 'false'
+          setup-tools: |
+            kubectl
+          kubectl: '0.0.0-nonexistent'
+
+      - name: Assert action completed without failing the workflow
+        run: |
+          echo "Action completed without failing the workflow (fail-fast=false)"
+          echo "kubectl-path: '${{ steps.action.outputs.kubectl-path }}'"
+          echo "PASS: action did not fail the workflow with fail-fast=false"

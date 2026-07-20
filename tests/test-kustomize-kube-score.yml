@@ -1,0 +1,77 @@
+name: Test kustomize and kube-score setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            kustomize
+            kube-score
+          kustomize: '5.8.1'
+          kube-score: '1.20.0'
+
+      - name: Assert kustomize-path output is set
+        env:
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+        run: |
+          echo "kustomize-path: $KUSTOMIZE_PATH"
+          if [ -z "$KUSTOMIZE_PATH" ]; then
+            echo "FAIL: kustomize-path output is empty"
+            exit 1
+          fi
+          echo "PASS: kustomize-path is set to $KUSTOMIZE_PATH"
+
+      - name: Assert kustomize is executable
+        env:
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+        run: |
+          echo "Running kustomize version check..."
+          "$KUSTOMIZE_PATH" version
+          VERSION=$("$KUSTOMIZE_PATH" version)
+          echo "kustomize version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: could not determine kustomize version"
+            exit 1
+          fi
+          echo "PASS: kustomize is executable"
+
+      - name: Assert kube-score-path output is set
+        env:
+          KUBE_SCORE_PATH: ${{ steps.action.outputs.kube-score-path }}
+        run: |
+          echo "kube-score-path: $KUBE_SCORE_PATH"
+          if [ -z "$KUBE_SCORE_PATH" ]; then
+            echo "FAIL: kube-score-path output is empty"
+            exit 1
+          fi
+          echo "PASS: kube-score-path is set to $KUBE_SCORE_PATH"
+
+      - name: Assert kube-score is executable
+        env:
+          KUBE_SCORE_PATH: ${{ steps.action.outputs.kube-score-path }}
+        run: |
+          echo "Running kube-score version check..."
+          "$KUBE_SCORE_PATH" version
+          VERSION=$("$KUBE_SCORE_PATH" version)
+          echo "kube-score version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: could not determine kube-score version"
+            exit 1
+          fi
+          echo "PASS: kube-score is executable"
+
+      - name: Assert helm-path is empty (not requested)
+        env:
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+        run: |
+          echo "helm-path: '$HELM_PATH'"
+          if [ -n "$HELM_PATH" ]; then
+            echo "FAIL: helm-path should be empty since helm was not requested"
+            exit 1
+          fi
+          echo "PASS: helm-path is empty as expected"

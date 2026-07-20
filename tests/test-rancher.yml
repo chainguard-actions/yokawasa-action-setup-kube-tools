@@ -1,0 +1,45 @@
+name: Test rancher input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            rancher
+          rancher: '2.13.3'
+      - name: Assert rancher-path output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.rancher-path }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: rancher-path output is empty"
+            exit 1
+          fi
+          echo "PASS: rancher-path=$ACTUAL"
+      - name: Assert rancher binary exists and is executable
+        env:
+          RANCHER_PATH: ${{ steps.action.outputs.rancher-path }}
+        run: |
+          echo "rancher-path: $RANCHER_PATH"
+          if [ ! -x "$RANCHER_PATH" ]; then
+            echo "FAIL: rancher binary not found or not executable at $RANCHER_PATH"
+            exit 1
+          fi
+          echo "PASS: rancher binary is executable"
+      - name: Assert rancher version
+        env:
+          RANCHER_PATH: ${{ steps.action.outputs.rancher-path }}
+        run: |
+          VERSION=$("$RANCHER_PATH" --version 2>&1 | head -1)
+          echo "rancher version output: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: could not determine rancher version"
+            exit 1
+          fi
+          echo "PASS"

@@ -1,0 +1,62 @@
+name: Test conftest setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            conftest
+          conftest: '0.67.1'
+
+      - name: Assert conftest-path output is set
+        env:
+          CONFTEST_PATH: ${{ steps.action.outputs.conftest-path }}
+        run: |
+          echo "conftest-path: $CONFTEST_PATH"
+          if [ -z "$CONFTEST_PATH" ]; then
+            echo "FAIL: conftest-path output is empty"
+            exit 1
+          fi
+          echo "PASS: conftest-path is set to $CONFTEST_PATH"
+
+      - name: Assert conftest is executable
+        env:
+          CONFTEST_PATH: ${{ steps.action.outputs.conftest-path }}
+        run: |
+          echo "Running conftest version check..."
+          "$CONFTEST_PATH" --version
+          VERSION=$("$CONFTEST_PATH" --version)
+          echo "conftest version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: could not determine conftest version"
+            exit 1
+          fi
+          echo "PASS: conftest is executable"
+
+      - name: Assert other tool paths are empty (not requested)
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "kubectl-path: '$KUBECTL_PATH'"
+          echo "helm-path: '$HELM_PATH'"
+          echo "yq-path: '$YQ_PATH'"
+          if [ -n "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl-path should be empty"
+            exit 1
+          fi
+          if [ -n "$HELM_PATH" ]; then
+            echo "FAIL: helm-path should be empty"
+            exit 1
+          fi
+          if [ -n "$YQ_PATH" ]; then
+            echo "FAIL: yq-path should be empty"
+            exit 1
+          fi
+          echo "PASS: non-requested tool paths are empty"

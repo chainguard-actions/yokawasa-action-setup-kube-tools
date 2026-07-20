@@ -1,6 +1,6 @@
 <!-- markdownlint-disable -->
 
-# Hardening Report: yokawasa--action-setup-kube-tools--/v0.14.0
+# Hardening Report: yokawasa--action-setup-kube-tools/v0.14.0
 
 > This file was generated automatically by the hardening agent.
 
@@ -8,28 +8,28 @@
 
 **Test Policy SHA:** `843adf9e4b8f85d0c08b27b9d0b09dd094b54702`
 
-**Harden Agent Version:** `1`
+**Harden Agent Version:** `2`
 
-Action **yokawasa--action-setup-kube-tools--/v0.14.0** was hardened automatically. 2 finding(s) were identified and resolved across 2 iteration(s).
+Action **yokawasa--action-setup-kube-tools/v0.14.0** was hardened automatically. 2 finding(s) were identified and resolved across 1 iteration(s).
 
 ## Findings Fixed
 
 ### script-injection (severity: high)
 
-Multiple run: blocks in .github/workflows/test.yml directly interpolate GitHub Actions expressions (${{ ... }}) inside shell commands, violating rule (a). This includes ${{steps.setup.outputs.kubectl-path}} and similar step output expressions used as shell variable assignments in run: blocks across jobs test-all-tools-no-input, test-all-tools-with-versrion-input, test-with-some-tools-selected-and-latest, test-force-arm64, and test-arm-autodetect. Additionally, ${{ runner.os }} and ${{ runner.arch }} are interpolated directly in a run: block in test-arm-autodetect. Any ${{ ... }} expression inside a run: shell string is a script-injection risk because the value is substituted before the shell parses the command.
+Rule (a): Multiple run: blocks in the workflow directly interpolate ${{ steps.setup.outputs.* }} expressions into shell scripts. The steps.*.outputs.* context is workflow-controllable and flows through YAML template substitution before the shell sees it, enabling script injection. For example: `kubectl=${{steps.setup.outputs.kubectl-path}}` assigns the raw expression value to a shell variable, and the value is then used unquoted as a command path. Affected steps: job 'test-all-tools-no-input' second run block (line 40), job 'test-all-tools-with-versrion-input' second run block (line 83), job 'test-with-some-tools-selected-and-latest' second run block (line 122), job 'test-force-arm64' run block (line 196), job 'test-arm-autodetect' 'Verify binaries are ARM64' run block (line 258). Additionally, rule (a): job 'test-arm-autodetect' 'Show runner arch' step (line 238) directly interpolates ${{ runner.os }} and ${{ runner.arch }} into a run: block.
 
 Locations:
 
-- `.github/workflows/test.yml:43`
-- `.github/workflows/test.yml:79`
-- `.github/workflows/test.yml:113`
-- `.github/workflows/test.yml:175`
-- `.github/workflows/test.yml:205`
-- `.github/workflows/test.yml:218`
+- `.github/workflows/test.yml:40`
+- `.github/workflows/test.yml:83`
+- `.github/workflows/test.yml:122`
+- `.github/workflows/test.yml:196`
+- `.github/workflows/test.yml:238`
+- `.github/workflows/test.yml:258`
 
 ### missing-permissions (severity: medium)
 
-The workflow file .github/workflows/test.yml has no top-level permissions: key and none of its jobs (build, test-all-tools-no-input, test-all-tools-with-versrion-input, test-with-some-tools-selected-and-latest, test-version-file, test-force-arm64, test-arm-autodetect) define a permissions: block. Without explicit permissions, the workflow inherits the default repository permissions, which may be overly broad.
+The workflow file has no top-level `permissions:` key and none of the jobs (build, test-all-tools-no-input, test-all-tools-with-versrion-input, test-with-some-tools-selected-and-latest, test-version-file, test-force-arm64, test-arm-autodetect) define a job-level `permissions:` block. This means the workflow runs with the default, overly broad repository permissions. A top-level or per-job `permissions:` block with minimal specific scopes should be added.
 
 Locations:
 
@@ -43,13 +43,5 @@ Locations:
 
 **Notes:**
 
-Fixed .github/workflows/test.yml: (1) Added top-level `permissions: {}` to restrict default permissions. (2) Moved all ${{ steps.setup.outputs.*-path }} expressions from run: blocks into env: blocks across jobs test-all-tools-no-input, test-all-tools-with-versrion-input, test-with-some-tools-selected-and-latest, test-force-arm64, and test-arm-autodetect. Also moved ${{ runner.os }} and ${{ runner.arch }} from the run: block in test-arm-autodetect into an env: block. Shell scripts now reference plain environment variables instead of GitHub Actions expressions.
-
-### Iteration 2
-
-**Fixes applied:** script-injection
-
-**Notes:**
-
-Fixed script injection in .github/workflows/test.yml by double-quoting all unquoted variable expansions used in command position. Changed ${kubectl}, ${kustomize}, ${helm}, ${kubeval}, ${kubeconform}, ${conftest}, ${yq}, ${rancher}, ${tilt}, ${skaffold}, ${kubescore} to "${variable}" form across all 5 affected jobs: test-all-tools-no-input, test-all-tools-with-versrion-input, test-with-some-tools-selected-and-latest, test-force-arm64, and test-arm-autodetect. Also fixed the unquoted if guards ([ ! -z ${kubectl} ] → [ ! -z "${kubectl}" ]) in the test-with-some-tools-selected-and-latest job.
+Fixed both findings in hardened/action/.github/workflows/test.yml: (1) Added `permissions: {}` at the top level and to each of the 7 jobs to enforce least-privilege. (2) Moved all ${{ steps.setup.outputs.* }} and ${{ runner.os }}/${{ runner.arch }} expressions out of run: blocks and into env: blocks on the same step, then referenced them as plain environment variables in the shell scripts. This eliminates the script injection risk at all 6 affected locations.
 

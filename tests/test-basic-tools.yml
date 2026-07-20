@@ -1,4 +1,4 @@
-name: Test version-file input
+name: Test basic tool setup (kubectl and helm)
 on:
   workflow_dispatch:
 jobs:
@@ -6,24 +6,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Create .tool-versions file
-        run: |
-          cat > /tmp/tool-versions-test <<'EOF'
-          # Kubernetes tools
-          kubectl 1.35.3
-          helm 3.20.1
-          EOF
-          echo "Created tool-versions file:"
-          cat /tmp/tool-versions-test
-
       - id: action
         uses: .
         with:
           setup-tools: |
             kubectl
             helm
-          version-file: '/tmp/tool-versions-test'
+          kubectl: '1.35.3'
+          helm: '3.20.1'
 
       - name: Assert kubectl-path output is set
         env:
@@ -47,18 +37,41 @@ jobs:
           fi
           echo "PASS: helm-path is set to $HELM_PATH"
 
-      - name: Assert kubectl is executable
+      - name: Assert kubectl is executable and correct version
         env:
           KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
         run: |
           echo "Running kubectl version check..."
           "$KUBECTL_PATH" version --client --output=yaml
+          VERSION=$("$KUBECTL_PATH" version --client --output=yaml | grep -i 'gitVersion' | head -1 | awk '{print $2}')
+          echo "kubectl version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: could not determine kubectl version"
+            exit 1
+          fi
           echo "PASS: kubectl is executable"
 
-      - name: Assert helm is executable
+      - name: Assert helm is executable and correct version
         env:
           HELM_PATH: ${{ steps.action.outputs.helm-path }}
         run: |
           echo "Running helm version check..."
           "$HELM_PATH" version --short
+          VERSION=$("$HELM_PATH" version --short)
+          echo "helm version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: could not determine helm version"
+            exit 1
+          fi
           echo "PASS: helm is executable"
+
+      - name: Assert kustomize-path is empty (not requested)
+        env:
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+        run: |
+          echo "kustomize-path: '$KUSTOMIZE_PATH'"
+          if [ -n "$KUSTOMIZE_PATH" ]; then
+            echo "FAIL: kustomize-path should be empty since kustomize was not requested"
+            exit 1
+          fi
+          echo "PASS: kustomize-path is empty as expected"

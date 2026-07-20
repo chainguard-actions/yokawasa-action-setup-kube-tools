@@ -1,0 +1,46 @@
+name: Test arch-type input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          arch-type: amd64
+          setup-tools: |
+            kubectl
+          kubectl: '1.29.0'
+      - name: Assert kubectl-path output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: kubectl-path output is empty"
+            exit 1
+          fi
+          echo "PASS: kubectl-path=$ACTUAL"
+      - name: Assert kubectl binary exists and is executable
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "kubectl-path: $KUBECTL_PATH"
+          if [ ! -x "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl binary not found or not executable at $KUBECTL_PATH"
+            exit 1
+          fi
+          echo "PASS: kubectl binary is executable"
+      - name: Assert kubectl version
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          VERSION=$("$KUBECTL_PATH" version --client --output=json 2>/dev/null | grep '"gitVersion"' | head -1 | sed 's/.*"v\([^"]*\)".*/\1/')
+          echo "kubectl version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: could not determine kubectl version"
+            exit 1
+          fi
+          echo "PASS: kubectl version=$VERSION"

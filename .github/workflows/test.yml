@@ -15,6 +15,7 @@ permissions: {}
 jobs:
   build: # make sure build/ci work properly
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
     - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
@@ -25,6 +26,7 @@ jobs:
         npm run all
   test-all-tools-no-input:
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
     - uses: ./
@@ -66,20 +68,21 @@ jobs:
         skaffold="$SKAFFOLD_PATH"
         kubescore="$KUBESCORE_PATH"
 
-        "${kubectl}" version --client
-        "${kustomize}" version
-        "${helm}" version
-        "${kubeval}" --version
-        "${kubeconform}" -v
-        "${conftest}" --version
-        "${yq}" --version
-        "${rancher}" --version
-        "${tilt}" version
-        "${skaffold}" version
-        "${kubescore}" version
+        ${kubectl} version --client
+        ${kustomize} version
+        ${helm} version
+        ${kubeval} --version
+        ${kubeconform} -v
+        ${conftest} --version
+        ${yq} --version
+        ${rancher} --version
+        ${tilt} version
+        ${skaffold} version
+        ${kubescore} version
 
   test-all-tools-with-versrion-input:
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
     - uses: ./
@@ -133,20 +136,21 @@ jobs:
         skaffold="$SKAFFOLD_PATH"
         kubescore="$KUBESCORE_PATH"
 
-        "${kubectl}" version --client
-        "${kustomize}" version
-        "${helm}" version
-        "${kubeval}" --version
-        "${kubeconform}" -v
-        "${conftest}" --version
-        "${yq}" --version
-        "${rancher}" --version
-        "${tilt}" version
-        "${skaffold}" version
-        "${kubescore}" version
+        ${kubectl} version --client
+        ${kustomize} version
+        ${helm} version
+        ${kubeval} --version
+        ${kubeconform} -v
+        ${conftest} --version
+        ${yq} --version
+        ${rancher} --version
+        ${tilt} version
+        ${skaffold} version
+        ${kubescore} version
 
   test-with-some-tools-selected-and-latest:
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
     - uses: ./
@@ -192,42 +196,43 @@ jobs:
         skaffold="$SKAFFOLD_PATH"
         kubescore="$KUBESCORE_PATH"
 
-        if [ ! -z "${kubectl}" ]; then
-          "${kubectl}" version --client
+        if [ ! -z ${kubectl} ]; then
+          ${kubectl} version --client
         fi
-        if [ ! -z "${kustomize}" ]; then
-          "${kustomize}" version
+        if [ ! -z ${kustomize} ]; then
+          ${kustomize} version
         fi
-        if [ ! -z "${helm}" ]; then
-          "${helm}" version
+        if [ ! -z ${helm} ]; then
+          ${helm} version
         fi
-        if [ ! -z "${kubeval}" ]; then
-          "${kubeval}" --version
+        if [ ! -z ${kubeval} ]; then
+          ${kubeval} --version
         fi
-        if [ ! -z "${kubeconform}" ]; then
-          "${kubeconform}" -v
+        if [ ! -z ${kubeconform} ]; then
+          ${kubeconform} -v
         fi
-        if [ ! -z "${conftest}" ]; then
-          "${conftest}" --version
+        if [ ! -z ${conftest} ]; then
+          ${conftest} --version
         fi
-        if [ ! -z "${yq}" ]; then
-          "${yq}" --version
+        if [ ! -z ${yq} ]; then
+          ${yq} --version
         fi
-        if [ ! -z "${rancher}" ]; then
-          "${rancher}" --version
+        if [ ! -z ${rancher} ]; then
+          ${rancher} --version
         fi
-        if [ ! -z "${tilt}" ]; then
-          "${tilt}" version
+        if [ ! -z ${tilt} ]; then
+          ${tilt} version
         fi
-        if [ ! -z "${skaffold}" ]; then
-          "${skaffold}" version
+        if [ ! -z ${skaffold} ]; then
+          ${skaffold} version
         fi
-        if [ ! -z "${kubescore}" ]; then
-          "${kubescore}" version
+        if [ ! -z ${kubescore} ]; then
+          ${kubescore} version
         fi
 
   test-version-file:
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
     - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
     - name: Create .tool-versions
@@ -261,6 +266,7 @@ jobs:
   # ARM test (force ARM64 artifacts on x64 runner)
   test-force-arm64:
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
     - uses: ./
@@ -315,6 +321,7 @@ jobs:
   # ARM64 auto-detect test (no arch-type input)
   test-arm-autodetect:
     runs-on: ubuntu-24.04-arm
+    permissions: {}
     steps:
     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
     - name: Show runner arch

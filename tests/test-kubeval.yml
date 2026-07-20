@@ -1,0 +1,45 @@
+name: Test kubeval input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            kubeval
+          kubeval: '0.16.1'
+      - name: Assert kubeval-path output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.kubeval-path }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: kubeval-path output is empty"
+            exit 1
+          fi
+          echo "PASS: kubeval-path=$ACTUAL"
+      - name: Assert kubeval binary exists and is executable
+        env:
+          KUBEVAL_PATH: ${{ steps.action.outputs.kubeval-path }}
+        run: |
+          echo "kubeval-path: $KUBEVAL_PATH"
+          if [ ! -x "$KUBEVAL_PATH" ]; then
+            echo "FAIL: kubeval binary not found or not executable at $KUBEVAL_PATH"
+            exit 1
+          fi
+          echo "PASS: kubeval binary is executable"
+      - name: Assert kubeval version
+        env:
+          KUBEVAL_PATH: ${{ steps.action.outputs.kubeval-path }}
+        run: |
+          VERSION=$("$KUBEVAL_PATH" --version 2>&1 | head -1)
+          echo "kubeval version output: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: could not determine kubeval version"
+            exit 1
+          fi
+          echo "PASS"

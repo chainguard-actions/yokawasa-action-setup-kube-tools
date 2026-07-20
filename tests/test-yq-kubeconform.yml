@@ -1,0 +1,77 @@
+name: Test yq and kubeconform setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            yq
+            kubeconform
+          yq: '4.52.5'
+          kubeconform: '0.7.0'
+
+      - name: Assert yq-path output is set
+        env:
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "yq-path: $YQ_PATH"
+          if [ -z "$YQ_PATH" ]; then
+            echo "FAIL: yq-path output is empty"
+            exit 1
+          fi
+          echo "PASS: yq-path is set to $YQ_PATH"
+
+      - name: Assert yq is executable
+        env:
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "Running yq version check..."
+          "$YQ_PATH" --version
+          VERSION=$("$YQ_PATH" --version)
+          echo "yq version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: could not determine yq version"
+            exit 1
+          fi
+          echo "PASS: yq is executable"
+
+      - name: Assert kubeconform-path output is set
+        env:
+          KUBECONFORM_PATH: ${{ steps.action.outputs.kubeconform-path }}
+        run: |
+          echo "kubeconform-path: $KUBECONFORM_PATH"
+          if [ -z "$KUBECONFORM_PATH" ]; then
+            echo "FAIL: kubeconform-path output is empty"
+            exit 1
+          fi
+          echo "PASS: kubeconform-path is set to $KUBECONFORM_PATH"
+
+      - name: Assert kubeconform is executable
+        env:
+          KUBECONFORM_PATH: ${{ steps.action.outputs.kubeconform-path }}
+        run: |
+          echo "Running kubeconform version check..."
+          "$KUBECONFORM_PATH" -v
+          VERSION=$("$KUBECONFORM_PATH" -v)
+          echo "kubeconform version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: could not determine kubeconform version"
+            exit 1
+          fi
+          echo "PASS: kubeconform is executable"
+
+      - name: Assert kubectl-path is empty (not requested)
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "kubectl-path: '$KUBECTL_PATH'"
+          if [ -n "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl-path should be empty since kubectl was not requested"
+            exit 1
+          fi
+          echo "PASS: kubectl-path is empty as expected"

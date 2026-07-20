@@ -1,0 +1,45 @@
+name: Test tilt input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            tilt
+          tilt: '0.37.0'
+      - name: Assert tilt-path output is set
+        env:
+          ACTUAL: ${{ steps.action.outputs.tilt-path }}
+        run: |
+          echo "actual: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: tilt-path output is empty"
+            exit 1
+          fi
+          echo "PASS: tilt-path=$ACTUAL"
+      - name: Assert tilt binary exists and is executable
+        env:
+          TILT_PATH: ${{ steps.action.outputs.tilt-path }}
+        run: |
+          echo "tilt-path: $TILT_PATH"
+          if [ ! -x "$TILT_PATH" ]; then
+            echo "FAIL: tilt binary not found or not executable at $TILT_PATH"
+            exit 1
+          fi
+          echo "PASS: tilt binary is executable"
+      - name: Assert tilt version
+        env:
+          TILT_PATH: ${{ steps.action.outputs.tilt-path }}
+        run: |
+          VERSION=$("$TILT_PATH" version 2>&1 | head -1)
+          echo "tilt version output: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: could not determine tilt version"
+            exit 1
+          fi
+          echo "PASS"

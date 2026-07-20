@@ -1,0 +1,62 @@
+name: Test skaffold setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            skaffold
+          skaffold: '2.18.1'
+
+      - name: Assert skaffold-path output is set
+        env:
+          SKAFFOLD_PATH: ${{ steps.action.outputs.skaffold-path }}
+        run: |
+          echo "skaffold-path: $SKAFFOLD_PATH"
+          if [ -z "$SKAFFOLD_PATH" ]; then
+            echo "FAIL: skaffold-path output is empty"
+            exit 1
+          fi
+          echo "PASS: skaffold-path is set to $SKAFFOLD_PATH"
+
+      - name: Assert skaffold is executable
+        env:
+          SKAFFOLD_PATH: ${{ steps.action.outputs.skaffold-path }}
+        run: |
+          echo "Running skaffold version check..."
+          "$SKAFFOLD_PATH" version
+          VERSION=$("$SKAFFOLD_PATH" version)
+          echo "skaffold version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: could not determine skaffold version"
+            exit 1
+          fi
+          echo "PASS: skaffold is executable"
+
+      - name: Assert other tool paths are empty (not requested)
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+          TILT_PATH: ${{ steps.action.outputs.tilt-path }}
+        run: |
+          echo "kubectl-path: '$KUBECTL_PATH'"
+          echo "helm-path: '$HELM_PATH'"
+          echo "tilt-path: '$TILT_PATH'"
+          if [ -n "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl-path should be empty"
+            exit 1
+          fi
+          if [ -n "$HELM_PATH" ]; then
+            echo "FAIL: helm-path should be empty"
+            exit 1
+          fi
+          if [ -n "$TILT_PATH" ]; then
+            echo "FAIL: tilt-path should be empty"
+            exit 1
+          fi
+          echo "PASS: non-requested tool paths are empty"
