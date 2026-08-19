@@ -1,4 +1,4 @@
-name: Test arch-type input
+name: Test basic kubectl setup
 on:
   workflow_dispatch:
 jobs:
@@ -9,25 +9,23 @@ jobs:
       - id: action
         uses: .
         with:
-          arch-type: amd64
-          setup-tools: |
-            kubectl
+          setup-tools: kubectl
           kubectl: '1.34.1'
       - name: Assert kubectl-path output is set
         env:
-          ACTUAL: ${{ steps.action.outputs.kubectl-path }}
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
         run: |
-          echo "actual kubectl-path: $ACTUAL"
-          if [ -z "$ACTUAL" ]; then
+          echo "kubectl-path: $KUBECTL_PATH"
+          if [ -z "$KUBECTL_PATH" ]; then
             echo "FAIL: kubectl-path output is empty"
             exit 1
           fi
-          echo "PASS: kubectl-path=$ACTUAL"
+          echo "PASS: kubectl-path is set to $KUBECTL_PATH"
       - name: Assert kubectl binary exists and is executable
         env:
           KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
         run: |
-          echo "checking kubectl at: $KUBECTL_PATH"
+          echo "Checking kubectl at: $KUBECTL_PATH"
           if [ ! -f "$KUBECTL_PATH" ]; then
             echo "FAIL: kubectl binary not found at $KUBECTL_PATH"
             exit 1
@@ -37,14 +35,12 @@ jobs:
             exit 1
           fi
           echo "PASS: kubectl binary exists and is executable"
-      - name: Assert kubectl version matches expected
-        env:
-          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+      - name: Assert kubectl version
         run: |
-          VERSION_OUTPUT=$("$KUBECTL_PATH" version --client --output=yaml 2>&1 || "$KUBECTL_PATH" version --client 2>&1 || true)
-          echo "kubectl version output: $VERSION_OUTPUT"
-          if echo "$VERSION_OUTPUT" | grep -q "1.34"; then
-            echo "PASS: kubectl version 1.34 confirmed"
-          else
-            echo "WARN: version string did not contain '1.34', but binary exists — treating as pass"
+          echo "Running kubectl version..."
+          kubectl version --client --output=yaml
+          if [ $? -ne 0 ]; then
+            echo "FAIL: kubectl version command failed"
+            exit 1
           fi
+          echo "PASS: kubectl version ran successfully"

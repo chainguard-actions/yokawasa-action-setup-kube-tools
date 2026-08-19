@@ -1,0 +1,34 @@
+name: Test kubeconform and kube-score setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            kubeconform
+            kube-score
+          kubeconform: '0.7.0'
+          kube-score: '1.20.0'
+      - name: Assert kubeconform binary works
+        run: |
+          echo "Running kubeconform version..."
+          kubeconform -v
+          if [ $? -ne 0 ]; then
+            echo "FAIL: kubeconform version command failed"
+            exit 1
+          fi
+          echo "PASS: kubeconform version ran successfully"
+      - name: Assert kube-score binary works
+        run: |
+          echo "Running kube-score version..."
+          kube-score version
+          if [ $? -ne 0 ]; then
+            echo "FAIL: kube-score version command failed"
+            exit 1
+          fi
+          echo "PASS: kube-score version ran successfully"

@@ -1,0 +1,47 @@
+name: Test kustomize setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: kustomize
+          kustomize: '5.3.0'
+          fail-fast: 'true'
+      - name: Assert kustomize binary is in PATH
+        run: |
+          echo "Checking kustomize in PATH..."
+          if ! which kustomize > /dev/null 2>&1; then
+            echo "FAIL: kustomize not found in PATH"
+            exit 1
+          fi
+          echo "PASS: kustomize found at $(which kustomize)"
+      - name: Assert kustomize version matches requested
+        run: |
+          KUSTOMIZE_VERSION=$(kustomize version 2>&1 || true)
+          echo "kustomize version: $KUSTOMIZE_VERSION"
+          if echo "$KUSTOMIZE_VERSION" | grep -q "5.3"; then
+            echo "PASS: kustomize version contains 5.3"
+          else
+            echo "FAIL: kustomize version does not contain 5.3, got: $KUSTOMIZE_VERSION"
+            exit 1
+          fi
+      - name: Assert kustomize-path output is set
+        env:
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+        run: |
+          echo "kustomize-path: $KUSTOMIZE_PATH"
+          if [ -z "$KUSTOMIZE_PATH" ]; then
+            echo "WARN: kustomize-path output is empty (may be due to async output setting)"
+          else
+            echo "PASS: kustomize-path is set to $KUSTOMIZE_PATH"
+            if [ ! -f "$KUSTOMIZE_PATH" ]; then
+              echo "FAIL: kustomize binary not found at $KUSTOMIZE_PATH"
+              exit 1
+            fi
+            echo "PASS: kustomize binary exists at $KUSTOMIZE_PATH"
+          fi

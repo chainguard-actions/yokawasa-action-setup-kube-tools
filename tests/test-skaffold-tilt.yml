@@ -1,0 +1,54 @@
+name: Test skaffold and tilt setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            skaffold
+            tilt
+          skaffold: '2.16.1'
+          tilt: '0.35.1'
+      - name: Assert skaffold-path output is set
+        env:
+          SKAFFOLD_PATH: ${{ steps.action.outputs.skaffold-path }}
+        run: |
+          echo "skaffold-path: $SKAFFOLD_PATH"
+          if [ -z "$SKAFFOLD_PATH" ]; then
+            echo "FAIL: skaffold-path output is empty"
+            exit 1
+          fi
+          echo "PASS: skaffold-path is set to $SKAFFOLD_PATH"
+      - name: Assert tilt-path output is set
+        env:
+          TILT_PATH: ${{ steps.action.outputs.tilt-path }}
+        run: |
+          echo "tilt-path: $TILT_PATH"
+          if [ -z "$TILT_PATH" ]; then
+            echo "FAIL: tilt-path output is empty"
+            exit 1
+          fi
+          echo "PASS: tilt-path is set to $TILT_PATH"
+      - name: Assert skaffold binary works
+        run: |
+          echo "Running skaffold version..."
+          skaffold version
+          if [ $? -ne 0 ]; then
+            echo "FAIL: skaffold version command failed"
+            exit 1
+          fi
+          echo "PASS: skaffold version ran successfully"
+      - name: Assert tilt binary works
+        run: |
+          echo "Running tilt version..."
+          tilt version
+          if [ $? -ne 0 ]; then
+            echo "FAIL: tilt version command failed"
+            exit 1
+          fi
+          echo "PASS: tilt version ran successfully"
