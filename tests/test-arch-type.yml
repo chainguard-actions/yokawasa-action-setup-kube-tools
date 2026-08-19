@@ -1,4 +1,4 @@
-name: Test arch-type input - explicit amd64 architecture
+name: Test arch-type input
 on:
   workflow_dispatch:
 jobs:
@@ -9,51 +9,35 @@ jobs:
       - id: action
         uses: .
         with:
-          arch-type: 'amd64'
+          arch-type: amd64
           setup-tools: |
-            kustomize
-            yq
-          kustomize: '5.8.1'
-          yq: '4.52.5'
-      - name: Assert kustomize-path output is set
+            kubectl
+          kubectl: '1.35.3'
+      - name: Assert kubectl-path output is set
         env:
-          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
         run: |
-          echo "kustomize-path: $KUSTOMIZE_PATH"
-          if [ -z "$KUSTOMIZE_PATH" ]; then
-            echo "FAIL: kustomize-path output is empty"
+          echo "kubectl-path: $KUBECTL_PATH"
+          if [ -z "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl-path output is empty"
             exit 1
           fi
-          echo "PASS: kustomize-path=$KUSTOMIZE_PATH"
-      - name: Assert yq-path output is set
+          echo "PASS: kubectl-path is set to $KUBECTL_PATH"
+      - name: Assert kubectl binary exists and is executable
         env:
-          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
         run: |
-          echo "yq-path: $YQ_PATH"
-          if [ -z "$YQ_PATH" ]; then
-            echo "FAIL: yq-path output is empty"
+          echo "Checking kubectl at: $KUBECTL_PATH"
+          if [ ! -f "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl binary not found at $KUBECTL_PATH"
             exit 1
           fi
-          echo "PASS: yq-path=$YQ_PATH"
-      - name: Assert kustomize is executable
-        env:
-          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
-        run: |
-          echo "Checking kustomize at: $KUSTOMIZE_PATH"
-          if [ ! -x "$KUSTOMIZE_PATH" ]; then
-            echo "FAIL: kustomize binary is not executable at $KUSTOMIZE_PATH"
+          if [ ! -x "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl binary is not executable"
             exit 1
           fi
-          "$KUSTOMIZE_PATH" version
-          echo "PASS: kustomize is executable"
-      - name: Assert yq is executable
-        env:
-          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+          echo "PASS: kubectl binary exists and is executable"
+      - name: Assert kubectl version
         run: |
-          echo "Checking yq at: $YQ_PATH"
-          if [ ! -x "$YQ_PATH" ]; then
-            echo "FAIL: yq binary is not executable at $YQ_PATH"
-            exit 1
-          fi
-          "$YQ_PATH" --version
-          echo "PASS: yq is executable"
+          kubectl version --client
+          echo "PASS: kubectl version command succeeded"

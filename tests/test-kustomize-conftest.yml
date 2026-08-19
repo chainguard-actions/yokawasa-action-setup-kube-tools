@@ -1,0 +1,82 @@
+name: Test kustomize and conftest setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Prepare tool cache directory
+        run: mkdir -p /tmp/tool-cache
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            kustomize
+            conftest
+          kustomize: '5.8.1'
+          conftest: '0.67.1'
+        env:
+          RUNNER_TOOL_CACHE: /tmp/tool-cache
+      - name: Assert kustomize is available on PATH
+        run: |
+          if ! command -v kustomize > /dev/null 2>&1; then
+            echo "FAIL: kustomize not found on PATH"
+            exit 1
+          fi
+          echo "PASS: kustomize found on PATH"
+      - name: Assert kustomize version
+        run: |
+          VERSION=$(kustomize version 2>&1 || true)
+          echo "kustomize version: $VERSION"
+          if echo "$VERSION" | grep -q "5.8"; then
+            echo "PASS: kustomize version matches expected 5.8.x"
+          else
+            echo "FAIL: kustomize version does not match expected 5.8.x, got: $VERSION"
+            exit 1
+          fi
+      - name: Assert kustomize-path output is set
+        env:
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+        run: |
+          echo "kustomize-path: $KUSTOMIZE_PATH"
+          if [ -z "$KUSTOMIZE_PATH" ]; then
+            echo "FAIL: kustomize-path output is empty"
+            exit 1
+          fi
+          if [ ! -f "$KUSTOMIZE_PATH" ]; then
+            echo "FAIL: kustomize binary not found at $KUSTOMIZE_PATH"
+            exit 1
+          fi
+          echo "PASS: kustomize-path is set to $KUSTOMIZE_PATH and file exists"
+      - name: Assert conftest is available on PATH
+        run: |
+          if ! command -v conftest > /dev/null 2>&1; then
+            echo "FAIL: conftest not found on PATH"
+            exit 1
+          fi
+          echo "PASS: conftest found on PATH"
+      - name: Assert conftest version
+        run: |
+          VERSION=$(conftest --version 2>&1 || true)
+          echo "conftest version: $VERSION"
+          if echo "$VERSION" | grep -q "0.67"; then
+            echo "PASS: conftest version matches expected 0.67.x"
+          else
+            echo "FAIL: conftest version does not match expected 0.67.x, got: $VERSION"
+            exit 1
+          fi
+      - name: Assert conftest-path output is set
+        env:
+          CONFTEST_PATH: ${{ steps.action.outputs.conftest-path }}
+        run: |
+          echo "conftest-path: $CONFTEST_PATH"
+          if [ -z "$CONFTEST_PATH" ]; then
+            echo "FAIL: conftest-path output is empty"
+            exit 1
+          fi
+          if [ ! -f "$CONFTEST_PATH" ]; then
+            echo "FAIL: conftest binary not found at $CONFTEST_PATH"
+            exit 1
+          fi
+          echo "PASS: conftest-path is set to $CONFTEST_PATH and file exists"

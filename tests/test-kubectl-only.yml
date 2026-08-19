@@ -1,0 +1,65 @@
+name: Test kubectl setup only
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Prepare tool cache directory
+        run: mkdir -p /tmp/tool-cache
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            kubectl
+          kubectl: '1.35.3'
+        env:
+          RUNNER_TOOL_CACHE: /tmp/tool-cache
+      - name: Assert kubectl is available on PATH
+        run: |
+          if ! command -v kubectl > /dev/null 2>&1; then
+            echo "FAIL: kubectl not found on PATH"
+            exit 1
+          fi
+          echo "PASS: kubectl found on PATH"
+      - name: Assert kubectl version
+        run: |
+          VERSION=$(kubectl version --client 2>&1 || true)
+          echo "kubectl version output: $VERSION"
+          if echo "$VERSION" | grep -q "1.35"; then
+            echo "PASS: kubectl version matches expected 1.35.x"
+          else
+            echo "FAIL: kubectl version does not match expected 1.35.x, got: $VERSION"
+            exit 1
+          fi
+      - name: Assert kubectl-path output is set
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "kubectl-path: $KUBECTL_PATH"
+          if [ -z "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl-path output is empty"
+            exit 1
+          fi
+          if [ ! -f "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl binary not found at $KUBECTL_PATH"
+            exit 1
+          fi
+          echo "PASS: kubectl-path is set to $KUBECTL_PATH and file exists"
+      - name: Assert other tools not set up
+        env:
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+        run: |
+          echo "helm-path: '$HELM_PATH'"
+          echo "kustomize-path: '$KUSTOMIZE_PATH'"
+          if [ -n "$HELM_PATH" ]; then
+            echo "FAIL: helm-path should be empty when not in setup-tools"
+            exit 1
+          fi
+          if [ -n "$KUSTOMIZE_PATH" ]; then
+            echo "FAIL: kustomize-path should be empty when not in setup-tools"
+            exit 1
+          fi
+          echo "PASS: other tools not set up as expected"

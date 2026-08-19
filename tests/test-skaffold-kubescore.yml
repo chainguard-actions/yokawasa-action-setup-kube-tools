@@ -1,0 +1,82 @@
+name: Test skaffold and kube-score setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Prepare tool cache directory
+        run: mkdir -p /tmp/tool-cache
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            skaffold
+            kube-score
+          skaffold: '2.18.1'
+          kube-score: '1.20.0'
+        env:
+          RUNNER_TOOL_CACHE: /tmp/tool-cache
+      - name: Assert skaffold is available on PATH
+        run: |
+          if ! command -v skaffold > /dev/null 2>&1; then
+            echo "FAIL: skaffold not found on PATH"
+            exit 1
+          fi
+          echo "PASS: skaffold found on PATH"
+      - name: Assert skaffold version
+        run: |
+          VERSION=$(skaffold version 2>&1 || true)
+          echo "skaffold version: $VERSION"
+          if echo "$VERSION" | grep -q "2.18"; then
+            echo "PASS: skaffold version matches expected 2.18.x"
+          else
+            echo "FAIL: skaffold version does not match expected 2.18.x, got: $VERSION"
+            exit 1
+          fi
+      - name: Assert skaffold-path output is set
+        env:
+          SKAFFOLD_PATH: ${{ steps.action.outputs.skaffold-path }}
+        run: |
+          echo "skaffold-path: $SKAFFOLD_PATH"
+          if [ -z "$SKAFFOLD_PATH" ]; then
+            echo "FAIL: skaffold-path output is empty"
+            exit 1
+          fi
+          if [ ! -f "$SKAFFOLD_PATH" ]; then
+            echo "FAIL: skaffold binary not found at $SKAFFOLD_PATH"
+            exit 1
+          fi
+          echo "PASS: skaffold-path is set to $SKAFFOLD_PATH and file exists"
+      - name: Assert kube-score is available on PATH
+        run: |
+          if ! command -v kube-score > /dev/null 2>&1; then
+            echo "FAIL: kube-score not found on PATH"
+            exit 1
+          fi
+          echo "PASS: kube-score found on PATH"
+      - name: Assert kube-score version
+        run: |
+          VERSION=$(kube-score version 2>&1 || true)
+          echo "kube-score version: $VERSION"
+          if echo "$VERSION" | grep -q "1.20"; then
+            echo "PASS: kube-score version matches expected 1.20.x"
+          else
+            echo "FAIL: kube-score version does not match expected 1.20.x, got: $VERSION"
+            exit 1
+          fi
+      - name: Assert kube-score-path output is set
+        env:
+          KUBE_SCORE_PATH: ${{ steps.action.outputs.kube-score-path }}
+        run: |
+          echo "kube-score-path: $KUBE_SCORE_PATH"
+          if [ -z "$KUBE_SCORE_PATH" ]; then
+            echo "FAIL: kube-score-path output is empty"
+            exit 1
+          fi
+          if [ ! -f "$KUBE_SCORE_PATH" ]; then
+            echo "FAIL: kube-score binary not found at $KUBE_SCORE_PATH"
+            exit 1
+          fi
+          echo "PASS: kube-score-path is set to $KUBE_SCORE_PATH and file exists"

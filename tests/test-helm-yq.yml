@@ -1,0 +1,92 @@
+name: Test helm and yq setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Prepare tool cache directory
+        run: mkdir -p /tmp/tool-cache
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            helm
+            yq
+          helm: '3.20.1'
+          yq: '4.52.5'
+        env:
+          RUNNER_TOOL_CACHE: /tmp/tool-cache
+      - name: Assert helm is available on PATH
+        run: |
+          if ! command -v helm > /dev/null 2>&1; then
+            echo "FAIL: helm not found on PATH"
+            exit 1
+          fi
+          echo "PASS: helm found on PATH"
+      - name: Assert helm version
+        run: |
+          VERSION=$(helm version --short 2>&1 || true)
+          echo "helm version: $VERSION"
+          if echo "$VERSION" | grep -q "3.20"; then
+            echo "PASS: helm version matches expected 3.20.x"
+          else
+            echo "FAIL: helm version does not match expected 3.20.x, got: $VERSION"
+            exit 1
+          fi
+      - name: Assert helm-path output is set
+        env:
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+        run: |
+          echo "helm-path: $HELM_PATH"
+          if [ -z "$HELM_PATH" ]; then
+            echo "FAIL: helm-path output is empty"
+            exit 1
+          fi
+          if [ ! -f "$HELM_PATH" ]; then
+            echo "FAIL: helm binary not found at $HELM_PATH"
+            exit 1
+          fi
+          echo "PASS: helm-path is set to $HELM_PATH and file exists"
+      - name: Assert yq is available on PATH
+        run: |
+          if ! command -v yq > /dev/null 2>&1; then
+            echo "FAIL: yq not found on PATH"
+            exit 1
+          fi
+          echo "PASS: yq found on PATH"
+      - name: Assert yq version
+        run: |
+          VERSION=$(yq --version 2>&1 || true)
+          echo "yq version: $VERSION"
+          if echo "$VERSION" | grep -q "4.52"; then
+            echo "PASS: yq version matches expected 4.52.x"
+          else
+            echo "FAIL: yq version does not match expected 4.52.x, got: $VERSION"
+            exit 1
+          fi
+      - name: Assert yq-path output is set
+        env:
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "yq-path: $YQ_PATH"
+          if [ -z "$YQ_PATH" ]; then
+            echo "FAIL: yq-path output is empty"
+            exit 1
+          fi
+          if [ ! -f "$YQ_PATH" ]; then
+            echo "FAIL: yq binary not found at $YQ_PATH"
+            exit 1
+          fi
+          echo "PASS: yq-path is set to $YQ_PATH and file exists"
+      - name: Assert kubectl not set up
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "kubectl-path: '$KUBECTL_PATH'"
+          if [ -n "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl-path should be empty when not in setup-tools"
+            exit 1
+          fi
+          echo "PASS: kubectl not set up as expected"

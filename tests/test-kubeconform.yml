@@ -1,0 +1,49 @@
+name: Test kubeconform setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Prepare tool cache directory
+        run: mkdir -p /tmp/tool-cache
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            kubeconform
+          kubeconform: '0.7.0'
+        env:
+          RUNNER_TOOL_CACHE: /tmp/tool-cache
+      - name: Assert kubeconform is available on PATH
+        run: |
+          if ! command -v kubeconform > /dev/null 2>&1; then
+            echo "FAIL: kubeconform not found on PATH"
+            exit 1
+          fi
+          echo "PASS: kubeconform found on PATH"
+      - name: Assert kubeconform version
+        run: |
+          VERSION=$(kubeconform -v 2>&1 || true)
+          echo "kubeconform version: $VERSION"
+          if echo "$VERSION" | grep -q "0.7"; then
+            echo "PASS: kubeconform version matches expected 0.7.x"
+          else
+            echo "FAIL: kubeconform version does not match expected 0.7.x, got: $VERSION"
+            exit 1
+          fi
+      - name: Assert kubeconform-path output is set
+        env:
+          KUBECONFORM_PATH: ${{ steps.action.outputs.kubeconform-path }}
+        run: |
+          echo "kubeconform-path: $KUBECONFORM_PATH"
+          if [ -z "$KUBECONFORM_PATH" ]; then
+            echo "FAIL: kubeconform-path output is empty"
+            exit 1
+          fi
+          if [ ! -f "$KUBECONFORM_PATH" ]; then
+            echo "FAIL: kubeconform binary not found at $KUBECONFORM_PATH"
+            exit 1
+          fi
+          echo "PASS: kubeconform-path is set to $KUBECONFORM_PATH and file exists"
