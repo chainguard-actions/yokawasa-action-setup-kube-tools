@@ -1,0 +1,59 @@
+name: Test single tool installation - yq
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            yq
+          yq: '4.52.5'
+          fail-fast: 'false'
+      - name: Assert yq-path output is set
+        env:
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "yq-path: $YQ_PATH"
+          if [ -z "$YQ_PATH" ]; then
+            echo "FAIL: yq-path output is empty"
+            exit 1
+          fi
+          echo "PASS: yq-path is set to $YQ_PATH"
+      - name: Assert yq binary works
+        env:
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "Testing yq at: $YQ_PATH"
+          VERSION=$("$YQ_PATH" --version 2>&1 || true)
+          echo "yq version output: $VERSION"
+          if ! echo "$VERSION" | grep -q 'yq'; then
+            echo "FAIL: yq binary does not produce expected version output"
+            exit 1
+          fi
+          echo "PASS: yq binary works"
+      - name: Assert other tool paths are empty
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+        run: |
+          echo "kubectl-path: '$KUBECTL_PATH'"
+          echo "helm-path: '$HELM_PATH'"
+          echo "kustomize-path: '$KUSTOMIZE_PATH'"
+          if [ -n "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl-path should be empty"
+            exit 1
+          fi
+          if [ -n "$HELM_PATH" ]; then
+            echo "FAIL: helm-path should be empty"
+            exit 1
+          fi
+          if [ -n "$KUSTOMIZE_PATH" ]; then
+            echo "FAIL: kustomize-path should be empty"
+            exit 1
+          fi
+          echo "PASS: all non-selected tool paths are empty"

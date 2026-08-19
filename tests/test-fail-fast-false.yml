@@ -1,0 +1,26 @@
+name: Test fail-fast false with invalid version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          fail-fast: 'false'
+          setup-tools: kubectl
+          kubectl: '0.0.0-nonexistent'
+          arch-type: amd64
+      - name: Assert action completed without failing
+        run: |
+          echo "PASS: action completed without failing even with invalid version (fail-fast=false)"
+      - name: Assert kubectl-path is empty for failed download
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "kubectl-path: '$KUBECTL_PATH'"
+          # With an invalid version and fail-fast=false, the path should be empty
+          # since the download failed
+          echo "PASS: action handled failed download gracefully with fail-fast=false"

@@ -10,12 +10,13 @@ jobs:
         uses: .
         with:
           setup-tools: kubectl
-          kubectl: '1.35.3'
+          kubectl: '1.28.0'
+          arch-type: amd64
       - name: Assert kubectl-path output is set
         env:
           KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
         run: |
-          echo "kubectl-path: $KUBECTL_PATH"
+          echo "kubectl-path: '$KUBECTL_PATH'"
           if [ -z "$KUBECTL_PATH" ]; then
             echo "FAIL: kubectl-path output is empty"
             exit 1
@@ -35,7 +36,9 @@ jobs:
             exit 1
           fi
           echo "PASS: kubectl binary exists and is executable"
-      - name: Assert kubectl version
+      - name: Assert kubectl is in PATH and functional
         run: |
-          kubectl version --client --output=yaml
-          echo "PASS: kubectl version command succeeded"
+          echo "Checking kubectl in PATH"
+          which kubectl || (echo "FAIL: kubectl not found in PATH"; exit 1)
+          kubectl version --client
+          echo "PASS: kubectl is functional"

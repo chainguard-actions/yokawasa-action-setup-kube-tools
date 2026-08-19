@@ -1,0 +1,61 @@
+name: Test kube-score and skaffold installation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            kube-score
+            skaffold
+          kube-score: '1.20.0'
+          skaffold: '2.18.1'
+          fail-fast: 'false'
+      - name: Assert kube-score-path output is set
+        env:
+          KUBE_SCORE_PATH: ${{ steps.action.outputs.kube-score-path }}
+        run: |
+          echo "kube-score-path: $KUBE_SCORE_PATH"
+          if [ -z "$KUBE_SCORE_PATH" ]; then
+            echo "FAIL: kube-score-path output is empty"
+            exit 1
+          fi
+          echo "PASS: kube-score-path is set to $KUBE_SCORE_PATH"
+      - name: Assert skaffold-path output is set
+        env:
+          SKAFFOLD_PATH: ${{ steps.action.outputs.skaffold-path }}
+        run: |
+          echo "skaffold-path: $SKAFFOLD_PATH"
+          if [ -z "$SKAFFOLD_PATH" ]; then
+            echo "FAIL: skaffold-path output is empty"
+            exit 1
+          fi
+          echo "PASS: skaffold-path is set to $SKAFFOLD_PATH"
+      - name: Assert kube-score binary works
+        env:
+          KUBE_SCORE_PATH: ${{ steps.action.outputs.kube-score-path }}
+        run: |
+          echo "Testing kube-score at: $KUBE_SCORE_PATH"
+          VERSION=$("$KUBE_SCORE_PATH" version 2>&1 || true)
+          echo "kube-score version output: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: kube-score binary produced no output"
+            exit 1
+          fi
+          echo "PASS: kube-score binary works"
+      - name: Assert skaffold binary works
+        env:
+          SKAFFOLD_PATH: ${{ steps.action.outputs.skaffold-path }}
+        run: |
+          echo "Testing skaffold at: $SKAFFOLD_PATH"
+          VERSION=$("$SKAFFOLD_PATH" version 2>&1 || true)
+          echo "skaffold version output: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: skaffold binary produced no output"
+            exit 1
+          fi
+          echo "PASS: skaffold binary works"

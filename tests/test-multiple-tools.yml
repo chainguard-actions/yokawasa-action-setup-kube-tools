@@ -12,43 +12,38 @@ jobs:
           setup-tools: |
             helm
             yq
-          helm: '3.20.1'
-          yq: '4.52.5'
+          helm: '3.14.0'
+          yq: '4.40.5'
+          arch-type: amd64
       - name: Assert helm-path output is set
         env:
           HELM_PATH: ${{ steps.action.outputs.helm-path }}
         run: |
-          echo "helm-path: $HELM_PATH"
+          echo "helm-path: '$HELM_PATH'"
           if [ -z "$HELM_PATH" ]; then
             echo "FAIL: helm-path output is empty"
             exit 1
           fi
-          echo "PASS: helm-path is set to $HELM_PATH"
+          echo "PASS: helm-path is set"
       - name: Assert yq-path output is set
         env:
           YQ_PATH: ${{ steps.action.outputs.yq-path }}
         run: |
-          echo "yq-path: $YQ_PATH"
+          echo "yq-path: '$YQ_PATH'"
           if [ -z "$YQ_PATH" ]; then
             echo "FAIL: yq-path output is empty"
             exit 1
           fi
-          echo "PASS: yq-path is set to $YQ_PATH"
+          echo "PASS: yq-path is set"
       - name: Assert helm binary works
         run: |
+          echo "Running helm version"
+          which helm || (echo "FAIL: helm not found in PATH"; exit 1)
           helm version
-          echo "PASS: helm version command succeeded"
+          echo "PASS: helm is functional"
       - name: Assert yq binary works
         run: |
+          echo "Running yq --version"
+          which yq || (echo "FAIL: yq not found in PATH"; exit 1)
           yq --version
-          echo "PASS: yq version command succeeded"
-      - name: Assert kubectl-path is empty when not requested
-        env:
-          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
-        run: |
-          echo "kubectl-path: '$KUBECTL_PATH'"
-          if [ -n "$KUBECTL_PATH" ]; then
-            echo "FAIL: kubectl-path should be empty when kubectl not in setup-tools"
-            exit 1
-          fi
-          echo "PASS: kubectl-path is empty as expected"
+          echo "PASS: yq is functional"

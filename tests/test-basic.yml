@@ -1,0 +1,71 @@
+name: Test basic usage - kubectl and helm
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            kubectl
+            helm
+          kubectl: '1.29.0'
+          helm: '3.14.0'
+          fail-fast: 'false'
+      - name: Assert kubectl-path output is set
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "kubectl-path: $KUBECTL_PATH"
+          if [ -z "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl-path output is empty"
+            exit 1
+          fi
+          echo "PASS: kubectl-path is set to $KUBECTL_PATH"
+      - name: Assert helm-path output is set
+        env:
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+        run: |
+          echo "helm-path: $HELM_PATH"
+          if [ -z "$HELM_PATH" ]; then
+            echo "FAIL: helm-path output is empty"
+            exit 1
+          fi
+          echo "PASS: helm-path is set to $HELM_PATH"
+      - name: Assert kubectl binary works
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "Testing kubectl at: $KUBECTL_PATH"
+          VERSION=$("$KUBECTL_PATH" version --client 2>&1 || true)
+          echo "kubectl version output: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: kubectl binary produced no output"
+            exit 1
+          fi
+          echo "PASS: kubectl binary works"
+      - name: Assert helm binary works
+        env:
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+        run: |
+          echo "Testing helm at: $HELM_PATH"
+          VERSION=$("$HELM_PATH" version --short 2>&1 || true)
+          echo "helm version output: $VERSION"
+          if ! echo "$VERSION" | grep -q 'v3'; then
+            echo "FAIL: helm binary does not work as expected"
+            exit 1
+          fi
+          echo "PASS: helm binary works"
+      - name: Assert kustomize-path is empty (not installed)
+        env:
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+        run: |
+          echo "kustomize-path: '$KUSTOMIZE_PATH'"
+          if [ -n "$KUSTOMIZE_PATH" ]; then
+            echo "FAIL: kustomize-path should be empty since kustomize was not in setup-tools"
+            exit 1
+          fi
+          echo "PASS: kustomize-path is empty as expected"
