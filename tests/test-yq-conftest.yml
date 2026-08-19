@@ -1,0 +1,65 @@
+name: Test yq and conftest installation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            yq
+            conftest
+          yq: '4.47.2'
+          conftest: '0.62.0'
+      - name: Assert yq-path output is set
+        env:
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "yq-path: $YQ_PATH"
+          if [ -z "$YQ_PATH" ]; then
+            echo "FAIL: yq-path output is empty"
+            exit 1
+          fi
+          echo "PASS: yq-path is set to $YQ_PATH"
+      - name: Assert conftest-path output is set
+        env:
+          CONFTEST_PATH: ${{ steps.action.outputs.conftest-path }}
+        run: |
+          echo "conftest-path: $CONFTEST_PATH"
+          if [ -z "$CONFTEST_PATH" ]; then
+            echo "FAIL: conftest-path output is empty"
+            exit 1
+          fi
+          echo "PASS: conftest-path is set to $CONFTEST_PATH"
+      - name: Assert yq binary is executable and works
+        env:
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "Testing yq at: $YQ_PATH"
+          if [ ! -x "$YQ_PATH" ]; then
+            echo "FAIL: yq binary is not executable at $YQ_PATH"
+            exit 1
+          fi
+          # Test yq can parse YAML
+          RESULT=$(echo 'key: value' | "$YQ_PATH" '.key' 2>/dev/null || echo "error")
+          echo "yq parse result: $RESULT"
+          if [ "$RESULT" != "value" ]; then
+            echo "FAIL: yq did not parse YAML correctly, got: $RESULT"
+            exit 1
+          fi
+          echo "PASS: yq binary works correctly"
+      - name: Assert conftest binary is executable
+        env:
+          CONFTEST_PATH: ${{ steps.action.outputs.conftest-path }}
+        run: |
+          echo "Testing conftest at: $CONFTEST_PATH"
+          if [ ! -x "$CONFTEST_PATH" ]; then
+            echo "FAIL: conftest binary is not executable at $CONFTEST_PATH"
+            exit 1
+          fi
+          VERSION=$("$CONFTEST_PATH" --version 2>/dev/null || echo "unknown")
+          echo "conftest version: $VERSION"
+          echo "PASS: conftest binary is executable"

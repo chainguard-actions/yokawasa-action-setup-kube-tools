@@ -1,0 +1,72 @@
+name: Test single tool setup - kubectl only
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            kubectl
+          kubectl: '1.34.1'
+
+      - name: Assert kubectl-path is non-empty
+        env:
+          ACTUAL: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "actual kubectl-path: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: kubectl-path output is empty"
+            exit 1
+          fi
+          echo "PASS: kubectl-path=$ACTUAL"
+
+      - name: Assert kubectl binary is executable
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "kubectl path: $KUBECTL_PATH"
+          if [ ! -x "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl binary not executable at $KUBECTL_PATH"
+            exit 1
+          fi
+          echo "PASS: kubectl binary is executable"
+
+      - name: Assert all other tool paths are empty
+        env:
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+          KUBEVAL_PATH: ${{ steps.action.outputs.kubeval-path }}
+          CONFTEST_PATH: ${{ steps.action.outputs.conftest-path }}
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+          RANCHER_PATH: ${{ steps.action.outputs.rancher-path }}
+          TILT_PATH: ${{ steps.action.outputs.tilt-path }}
+          SKAFFOLD_PATH: ${{ steps.action.outputs.skaffold-path }}
+          KUBE_SCORE_PATH: ${{ steps.action.outputs.kube-score-path }}
+        run: |
+          FAILED=0
+          for TOOL_NAME in kustomize helm kubeval conftest yq rancher tilt skaffold kube-score; do
+            case "$TOOL_NAME" in
+              kustomize) VAL="$KUSTOMIZE_PATH" ;;
+              helm)      VAL="$HELM_PATH" ;;
+              kubeval)   VAL="$KUBEVAL_PATH" ;;
+              conftest)  VAL="$CONFTEST_PATH" ;;
+              yq)        VAL="$YQ_PATH" ;;
+              rancher)   VAL="$RANCHER_PATH" ;;
+              tilt)      VAL="$TILT_PATH" ;;
+              skaffold)  VAL="$SKAFFOLD_PATH" ;;
+              kube-score) VAL="$KUBE_SCORE_PATH" ;;
+            esac
+            echo "$TOOL_NAME path: '$VAL'"
+            if [ -n "$VAL" ]; then
+              echo "FAIL: $TOOL_NAME-path should be empty when not in setup-tools, got: $VAL"
+              FAILED=1
+            fi
+          done
+          if [ "$FAILED" -eq 1 ]; then
+            exit 1
+          fi
+          echo "PASS: all non-selected tool paths are empty"

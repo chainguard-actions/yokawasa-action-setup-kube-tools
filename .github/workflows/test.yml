@@ -1,0 +1,355 @@
+name: "action-setup-kube-tools Test"
+on:
+  # Schedule run: Runs at 00:00, only on Mondays (Japan Time)
+  schedule:
+    - cron: '0 15 * * 1' 
+  pull_request:
+  push:
+    branches:
+      - master
+      - 'releases/*'
+      - 'v*'
+
+permissions: {}
+
+jobs:
+  build: # make sure build/ci work properly
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+    - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+      with:
+        node-version: '20.x'
+    - run: |
+        npm install
+        npm run all
+  test-all-tools-no-input:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+    - uses: ./
+      id: setup
+    - run: |
+        kubectl version --client
+        kustomize version
+        helm version
+        kubeval --version
+        kubeconform -v
+        conftest --version
+        yq --version
+        rancher --version
+        tilt version
+        skaffold version
+        kube-score version
+    - env:
+        KUBECTL_PATH: ${{steps.setup.outputs.kubectl-path}}
+        KUSTOMIZE_PATH: ${{steps.setup.outputs.kustomize-path}}
+        HELM_PATH: ${{steps.setup.outputs.helm-path}}
+        KUBEVAL_PATH: ${{steps.setup.outputs.kubeval-path}}
+        KUBECONFORM_PATH: ${{steps.setup.outputs.kubeconform-path}}
+        CONFTEST_PATH: ${{steps.setup.outputs.conftest-path}}
+        YQ_PATH: ${{steps.setup.outputs.yq-path}}
+        RANCHER_PATH: ${{steps.setup.outputs.rancher-path}}
+        TILT_PATH: ${{steps.setup.outputs.tilt-path}}
+        SKAFFOLD_PATH: ${{steps.setup.outputs.skaffold-path}}
+        KUBESCORE_PATH: ${{steps.setup.outputs.kube-score-path}}
+      run: |
+        kubectl="$KUBECTL_PATH"
+        kustomize="$KUSTOMIZE_PATH"
+        helm="$HELM_PATH"
+        kubeval="$KUBEVAL_PATH"
+        kubeconform="$KUBECONFORM_PATH"
+        conftest="$CONFTEST_PATH"
+        yq="$YQ_PATH"
+        rancher="$RANCHER_PATH"
+        tilt="$TILT_PATH"
+        skaffold="$SKAFFOLD_PATH"
+        kubescore="$KUBESCORE_PATH"
+
+        "${kubectl}" version --client
+        "${kustomize}" version
+        "${helm}" version
+        "${kubeval}" --version
+        "${kubeconform}" -v
+        "${conftest}" --version
+        "${yq}" --version
+        "${rancher}" --version
+        "${tilt}" version
+        "${skaffold}" version
+        "${kubescore}" version
+
+  test-all-tools-with-versrion-input:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+    - uses: ./
+      with:
+        kubectl: '1.17.1'
+        kustomize: '3.7.0'
+        helm: '3.2.4'
+        kubeval: '0.16.1'
+        kubeconform: '0.5.0'
+        conftest: '0.18.2'
+        yq: '4.7.1'
+        rancher: '2.4.10'
+        tilt: '0.18.11'
+        skaffold: '1.20.0'
+        kube-score: '1.10.1'
+      id: setup
+    - run: |
+        kubectl version --client
+        kustomize version
+        helm version
+        kubeval --version
+        kubeconform -v
+        conftest --version
+        yq --version
+        rancher --version
+        tilt version
+        skaffold version
+        kube-score version
+    - env:
+        KUBECTL_PATH: ${{steps.setup.outputs.kubectl-path}}
+        KUSTOMIZE_PATH: ${{steps.setup.outputs.kustomize-path}}
+        HELM_PATH: ${{steps.setup.outputs.helm-path}}
+        KUBEVAL_PATH: ${{steps.setup.outputs.kubeval-path}}
+        KUBECONFORM_PATH: ${{steps.setup.outputs.kubeconform-path}}
+        CONFTEST_PATH: ${{steps.setup.outputs.conftest-path}}
+        YQ_PATH: ${{steps.setup.outputs.yq-path}}
+        RANCHER_PATH: ${{steps.setup.outputs.rancher-path}}
+        TILT_PATH: ${{steps.setup.outputs.tilt-path}}
+        SKAFFOLD_PATH: ${{steps.setup.outputs.skaffold-path}}
+        KUBESCORE_PATH: ${{steps.setup.outputs.kube-score-path}}
+      run: |
+        kubectl="$KUBECTL_PATH"
+        kustomize="$KUSTOMIZE_PATH"
+        helm="$HELM_PATH"
+        kubeval="$KUBEVAL_PATH"
+        kubeconform="$KUBECONFORM_PATH"
+        conftest="$CONFTEST_PATH"
+        yq="$YQ_PATH"
+        rancher="$RANCHER_PATH"
+        tilt="$TILT_PATH"
+        skaffold="$SKAFFOLD_PATH"
+        kubescore="$KUBESCORE_PATH"
+
+        "${kubectl}" version --client
+        "${kustomize}" version
+        "${helm}" version
+        "${kubeval}" --version
+        "${kubeconform}" -v
+        "${conftest}" --version
+        "${yq}" --version
+        "${rancher}" --version
+        "${tilt}" version
+        "${skaffold}" version
+        "${kubescore}" version
+
+  test-with-some-tools-selected-and-latest:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+    - uses: ./
+      with:
+        arch-type: 'amd64'
+        setup-tools: |
+          kubectl
+          helm
+          kustomize
+          skaffold
+        kubectl: latest
+        helm: latest
+        kustomize: latest
+        skaffold: latest
+      id: setup
+    - run: |
+        kubectl version --client
+        kustomize version
+        helm version
+        skaffold version
+    - env:
+        KUBECTL_PATH: ${{steps.setup.outputs.kubectl-path}}
+        KUSTOMIZE_PATH: ${{steps.setup.outputs.kustomize-path}}
+        HELM_PATH: ${{steps.setup.outputs.helm-path}}
+        KUBEVAL_PATH: ${{steps.setup.outputs.kubeval-path}}
+        KUBECONFORM_PATH: ${{steps.setup.outputs.kubeconform-path}}
+        CONFTEST_PATH: ${{steps.setup.outputs.conftest-path}}
+        YQ_PATH: ${{steps.setup.outputs.yq-path}}
+        RANCHER_PATH: ${{steps.setup.outputs.rancher-path}}
+        TILT_PATH: ${{steps.setup.outputs.tilt-path}}
+        SKAFFOLD_PATH: ${{steps.setup.outputs.skaffold-path}}
+        KUBESCORE_PATH: ${{steps.setup.outputs.kube-score-path}}
+      run: |
+        kubectl="$KUBECTL_PATH"
+        kustomize="$KUSTOMIZE_PATH"
+        helm="$HELM_PATH"
+        kubeval="$KUBEVAL_PATH"
+        kubeconform="$KUBECONFORM_PATH"
+        conftest="$CONFTEST_PATH"
+        yq="$YQ_PATH"
+        rancher="$RANCHER_PATH"
+        tilt="$TILT_PATH"
+        skaffold="$SKAFFOLD_PATH"
+        kubescore="$KUBESCORE_PATH"
+
+        if [ ! -z "${kubectl}" ]; then
+          "${kubectl}" version --client
+        fi
+        if [ ! -z "${kustomize}" ]; then
+          "${kustomize}" version
+        fi
+        if [ ! -z "${helm}" ]; then
+          "${helm}" version
+        fi
+        if [ ! -z "${kubeval}" ]; then
+          "${kubeval}" --version
+        fi
+        if [ ! -z "${kubeconform}" ]; then
+          "${kubeconform}" -v
+        fi
+        if [ ! -z "${conftest}" ]; then
+          "${conftest}" --version
+        fi
+        if [ ! -z "${yq}" ]; then
+          "${yq}" --version
+        fi
+        if [ ! -z "${rancher}" ]; then
+          "${rancher}" --version
+        fi
+        if [ ! -z "${tilt}" ]; then
+          "${tilt}" version
+        fi
+        if [ ! -z "${skaffold}" ]; then
+          "${skaffold}" version
+        fi
+        if [ ! -z "${kubescore}" ]; then
+          "${kubescore}" version
+        fi
+
+  # ARM test (force ARM64 artifacts on x64 runner)
+  test-force-arm64:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+    - uses: ./
+      with:
+        arch-type: 'arm64'
+      id: setup
+    - env:
+        KUBECTL_PATH: ${{steps.setup.outputs.kubectl-path}}
+        KUSTOMIZE_PATH: ${{steps.setup.outputs.kustomize-path}}
+        HELM_PATH: ${{steps.setup.outputs.helm-path}}
+        KUBEVAL_PATH: ${{steps.setup.outputs.kubeval-path}}
+        KUBECONFORM_PATH: ${{steps.setup.outputs.kubeconform-path}}
+        CONFTEST_PATH: ${{steps.setup.outputs.conftest-path}}
+        YQ_PATH: ${{steps.setup.outputs.yq-path}}
+        RANCHER_PATH: ${{steps.setup.outputs.rancher-path}}
+        TILT_PATH: ${{steps.setup.outputs.tilt-path}}
+        SKAFFOLD_PATH: ${{steps.setup.outputs.skaffold-path}}
+        KUBESCORE_PATH: ${{steps.setup.outputs.kube-score-path}}
+      run: |
+        kubectl="$KUBECTL_PATH"
+        kustomize="$KUSTOMIZE_PATH"
+        helm="$HELM_PATH"
+        kubeval="$KUBEVAL_PATH"
+        kubeconform="$KUBECONFORM_PATH"
+        conftest="$CONFTEST_PATH"
+        yq="$YQ_PATH"
+        rancher="$RANCHER_PATH"
+        tilt="$TILT_PATH"
+        skaffold="$SKAFFOLD_PATH"
+        kubescore="$KUBESCORE_PATH"
+
+        echo "Expecting aarch64 ARM64 binaries (forced)"
+
+        check_arch() {
+          if [ -n "$1" ]; then
+            file "$1" | tee /dev/stderr | grep -E "aarch64|ARM" >/dev/null
+          fi
+        }
+
+        check_arch "${kubectl}"
+        check_arch "${kustomize}"
+        check_arch "${helm}"
+        # kubeval may be empty on arm64 as unsupported
+        check_arch "${kubeconform}"
+        check_arch "${conftest}"
+        check_arch "${yq}"
+        check_arch "${rancher}"
+        check_arch "${tilt}"
+        check_arch "${skaffold}"
+        check_arch "${kubescore}"
+
+  # ARM64 auto-detect test (no arch-type input)
+  test-arm-autodetect:
+    runs-on: ubuntu-24.04-arm
+    steps:
+    - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+    - name: Show runner arch
+      env:
+        RUNNER_OS: ${{ runner.os }}
+        RUNNER_ARCH: ${{ runner.arch }}
+      run: |
+        echo "runner.os=$RUNNER_OS"
+        echo "runner.arch=$RUNNER_ARCH"
+        uname -a
+        uname -m
+    - uses: ./
+      id: setup
+    - name: Verify tools execute on ARM64
+      run: |
+        kubectl version --client
+        kustomize version
+        helm version
+        kubeconform -v
+        conftest --version
+        yq --version
+        rancher --version
+        tilt version
+        skaffold version
+        kube-score version
+    - name: Verify binaries are ARM64
+      env:
+        KUBECTL_PATH: ${{steps.setup.outputs.kubectl-path}}
+        KUSTOMIZE_PATH: ${{steps.setup.outputs.kustomize-path}}
+        HELM_PATH: ${{steps.setup.outputs.helm-path}}
+        KUBEVAL_PATH: ${{steps.setup.outputs.kubeval-path}}
+        KUBECONFORM_PATH: ${{steps.setup.outputs.kubeconform-path}}
+        CONFTEST_PATH: ${{steps.setup.outputs.conftest-path}}
+        YQ_PATH: ${{steps.setup.outputs.yq-path}}
+        RANCHER_PATH: ${{steps.setup.outputs.rancher-path}}
+        TILT_PATH: ${{steps.setup.outputs.tilt-path}}
+        SKAFFOLD_PATH: ${{steps.setup.outputs.skaffold-path}}
+        KUBESCORE_PATH: ${{steps.setup.outputs.kube-score-path}}
+      run: |
+        kubectl="$KUBECTL_PATH"
+        kustomize="$KUSTOMIZE_PATH"
+        helm="$HELM_PATH"
+        kubeval="$KUBEVAL_PATH"
+        kubeconform="$KUBECONFORM_PATH"
+        conftest="$CONFTEST_PATH"
+        yq="$YQ_PATH"
+        rancher="$RANCHER_PATH"
+        tilt="$TILT_PATH"
+        skaffold="$SKAFFOLD_PATH"
+        kubescore="$KUBESCORE_PATH"
+
+        echo "Expecting aarch64 ARM64 binaries on ARM runner"
+
+        check_arch() {
+          if [ -n "$1" ]; then
+            file "$1" | tee /dev/stderr | grep -E "aarch64|ARM" >/dev/null
+          fi
+        }
+
+        check_arch "${kubectl}"
+        check_arch "${kustomize}"
+        check_arch "${helm}"
+        # kubeval may be skipped on arm64 (no support)
+        check_arch "${kubeconform}"
+        check_arch "${conftest}"
+        check_arch "${yq}"
+        check_arch "${rancher}"
+        check_arch "${tilt}"
+        check_arch "${skaffold}"
+        check_arch "${kubescore}"

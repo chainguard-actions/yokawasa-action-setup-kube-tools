@@ -1,0 +1,77 @@
+name: Test yq and kustomize setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            yq
+            kustomize
+          yq: '4.47.2'
+          kustomize: '5.7.1'
+
+      - name: Assert yq-path is non-empty
+        env:
+          ACTUAL: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "actual yq-path: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: yq-path output is empty"
+            exit 1
+          fi
+          echo "PASS: yq-path=$ACTUAL"
+
+      - name: Assert kustomize-path is non-empty
+        env:
+          ACTUAL: ${{ steps.action.outputs.kustomize-path }}
+        run: |
+          echo "actual kustomize-path: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: kustomize-path output is empty"
+            exit 1
+          fi
+          echo "PASS: kustomize-path=$ACTUAL"
+
+      - name: Assert yq binary works
+        env:
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "yq path: $YQ_PATH"
+          if [ ! -x "$YQ_PATH" ]; then
+            echo "FAIL: yq binary not executable at $YQ_PATH"
+            exit 1
+          fi
+          VERSION=$("$YQ_PATH" --version 2>/dev/null || true)
+          echo "yq version: $VERSION"
+          echo "PASS: yq binary is executable"
+
+      - name: Assert kustomize binary works
+        env:
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+        run: |
+          echo "kustomize path: $KUSTOMIZE_PATH"
+          if [ ! -x "$KUSTOMIZE_PATH" ]; then
+            echo "FAIL: kustomize binary not executable at $KUSTOMIZE_PATH"
+            exit 1
+          fi
+          VERSION=$("$KUSTOMIZE_PATH" version 2>/dev/null || true)
+          echo "kustomize version: $VERSION"
+          echo "PASS: kustomize binary is executable"
+
+      - name: Assert yq can parse YAML
+        env:
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "Testing yq YAML parsing..."
+          RESULT=$("$YQ_PATH" e '.name' - <<< 'name: test-value' 2>/dev/null || true)
+          echo "yq parse result: $RESULT"
+          if [ "$RESULT" != "test-value" ]; then
+            echo "FAIL: yq did not parse YAML correctly, expected 'test-value' got '$RESULT'"
+            exit 1
+          fi
+          echo "PASS: yq can parse YAML"

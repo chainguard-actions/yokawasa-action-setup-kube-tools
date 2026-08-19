@@ -1,0 +1,81 @@
+name: Test basic usage - kubectl and helm
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            kubectl
+            helm
+          kubectl: '1.34.1'
+          helm: '3.19.0'
+
+      - name: Assert kubectl-path is non-empty
+        env:
+          ACTUAL: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "actual kubectl-path: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: kubectl-path output is empty"
+            exit 1
+          fi
+          echo "PASS: kubectl-path=$ACTUAL"
+
+      - name: Assert helm-path is non-empty
+        env:
+          ACTUAL: ${{ steps.action.outputs.helm-path }}
+        run: |
+          echo "actual helm-path: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: helm-path output is empty"
+            exit 1
+          fi
+          echo "PASS: helm-path=$ACTUAL"
+
+      - name: Assert kubectl binary works
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+        run: |
+          echo "kubectl path: $KUBECTL_PATH"
+          if [ ! -f "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl binary not found at $KUBECTL_PATH"
+            exit 1
+          fi
+          VERSION=$("$KUBECTL_PATH" version --client --short 2>/dev/null || "$KUBECTL_PATH" version --client 2>/dev/null || true)
+          echo "kubectl version output: $VERSION"
+          echo "PASS: kubectl binary exists and is executable"
+
+      - name: Assert helm binary works
+        env:
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+        run: |
+          echo "helm path: $HELM_PATH"
+          if [ ! -f "$HELM_PATH" ]; then
+            echo "FAIL: helm binary not found at $HELM_PATH"
+            exit 1
+          fi
+          VERSION=$("$HELM_PATH" version --short 2>/dev/null || true)
+          echo "helm version output: $VERSION"
+          echo "PASS: helm binary exists and is executable"
+
+      - name: Assert non-selected tools have empty paths
+        env:
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "kustomize-path: $KUSTOMIZE_PATH"
+          echo "yq-path: $YQ_PATH"
+          if [ -n "$KUSTOMIZE_PATH" ]; then
+            echo "FAIL: kustomize-path should be empty when not in setup-tools"
+            exit 1
+          fi
+          if [ -n "$YQ_PATH" ]; then
+            echo "FAIL: yq-path should be empty when not in setup-tools"
+            exit 1
+          fi
+          echo "PASS: non-selected tools have empty paths"
