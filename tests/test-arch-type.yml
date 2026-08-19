@@ -1,4 +1,4 @@
-name: Test arch-type input with helm setup
+name: Test arch-type input
 on:
   workflow_dispatch:
 jobs:
@@ -9,40 +9,35 @@ jobs:
       - id: action
         uses: .
         with:
-          setup-tools: helm
-          helm: '3.19.0'
-          arch-type: 'amd64'
-      - name: Assert helm-path output is set
+          arch-type: amd64
+          setup-tools: |
+            kubectl
+          kubectl: '1.34.1'
+      - name: Assert kubectl-path output is set
         env:
-          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
         run: |
-          echo "helm-path: $HELM_PATH"
-          if [ -z "$HELM_PATH" ]; then
-            echo "FAIL: helm-path output is empty"
+          echo "kubectl-path: $KUBECTL_PATH"
+          if [ -z "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl-path output is empty"
             exit 1
           fi
-          echo "PASS: helm-path is set to $HELM_PATH"
-      - name: Assert helm binary exists and is executable
+          echo "PASS: kubectl-path is set to $KUBECTL_PATH"
+      - name: Assert kubectl binary exists and is executable
         env:
-          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
         run: |
-          echo "Checking helm binary at: $HELM_PATH"
-          if [ ! -f "$HELM_PATH" ]; then
-            echo "FAIL: helm binary not found at $HELM_PATH"
+          echo "Checking kubectl at: $KUBECTL_PATH"
+          if [ ! -f "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl binary not found at $KUBECTL_PATH"
             exit 1
           fi
-          if [ ! -x "$HELM_PATH" ]; then
-            echo "FAIL: helm binary is not executable"
+          if [ ! -x "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl binary is not executable"
             exit 1
           fi
-          echo "PASS: helm binary exists and is executable"
-      - name: Assert helm version
+          echo "PASS: kubectl binary exists and is executable"
+      - name: Assert kubectl version
         run: |
-          VERSION=$(helm version --short 2>/dev/null || helm version 2>&1)
-          echo "helm version: $VERSION"
-          if echo "$VERSION" | grep -q "3.19"; then
-            echo "PASS: helm version matches expected 3.19.x"
-          else
-            echo "FAIL: helm version does not match expected 3.19.x, got: $VERSION"
-            exit 1
-          fi
+          kubectl version --client --output=yaml
+          echo "PASS: kubectl runs successfully"

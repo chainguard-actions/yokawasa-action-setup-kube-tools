@@ -1,0 +1,54 @@
+name: Test kustomize and conftest setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            kustomize
+            conftest
+          kustomize: '5.7.1'
+          conftest: '0.62.0'
+      - name: Assert kustomize-path output is set
+        env:
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+        run: |
+          echo "kustomize-path: $KUSTOMIZE_PATH"
+          if [ -z "$KUSTOMIZE_PATH" ]; then
+            echo "FAIL: kustomize-path output is empty"
+            exit 1
+          fi
+          echo "PASS: kustomize-path is set to $KUSTOMIZE_PATH"
+      - name: Assert conftest-path output is set
+        env:
+          CONFTEST_PATH: ${{ steps.action.outputs.conftest-path }}
+        run: |
+          echo "conftest-path: $CONFTEST_PATH"
+          if [ -z "$CONFTEST_PATH" ]; then
+            echo "FAIL: conftest-path output is empty"
+            exit 1
+          fi
+          echo "PASS: conftest-path is set to $CONFTEST_PATH"
+      - name: Assert kustomize binary works
+        run: |
+          echo "kustomize version:"
+          kustomize version
+          if ! kustomize version 2>&1 | grep -q "5.7"; then
+            echo "FAIL: expected kustomize version 5.7.x"
+            exit 1
+          fi
+          echo "PASS: kustomize version matches expected"
+      - name: Assert conftest binary works
+        run: |
+          echo "conftest version:"
+          conftest --version
+          if ! conftest --version 2>&1 | grep -q "0.62"; then
+            echo "FAIL: expected conftest version 0.62.x"
+            exit 1
+          fi
+          echo "PASS: conftest version matches expected"

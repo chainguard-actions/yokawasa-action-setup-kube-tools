@@ -1,0 +1,49 @@
+name: Test conftest setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: conftest
+          conftest: '0.46.0'
+      - name: Assert conftest-path output is set
+        env:
+          CONFTEST_PATH: ${{ steps.action.outputs.conftest-path }}
+        run: |
+          echo "conftest-path: $CONFTEST_PATH"
+          if [ -z "$CONFTEST_PATH" ]; then
+            echo "FAIL: conftest-path output is empty"
+            exit 1
+          fi
+          echo "PASS: conftest-path is set to $CONFTEST_PATH"
+      - name: Assert conftest binary exists and is executable
+        env:
+          CONFTEST_PATH: ${{ steps.action.outputs.conftest-path }}
+        run: |
+          echo "Checking conftest at: $CONFTEST_PATH"
+          if [ ! -f "$CONFTEST_PATH" ]; then
+            echo "FAIL: conftest binary not found at $CONFTEST_PATH"
+            exit 1
+          fi
+          if [ ! -x "$CONFTEST_PATH" ]; then
+            echo "FAIL: conftest binary is not executable"
+            exit 1
+          fi
+          echo "PASS: conftest binary exists and is executable"
+      - name: Assert conftest version matches
+        env:
+          CONFTEST_PATH: ${{ steps.action.outputs.conftest-path }}
+        run: |
+          VERSION=$("$CONFTEST_PATH" --version 2>&1)
+          echo "conftest version: $VERSION"
+          if echo "$VERSION" | grep -q "0.46"; then
+            echo "PASS: conftest version contains 0.46"
+          else
+            echo "FAIL: conftest version does not contain 0.46, got: $VERSION"
+            exit 1
+          fi

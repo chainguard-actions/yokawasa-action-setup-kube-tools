@@ -10,7 +10,7 @@ jobs:
         uses: .
         with:
           setup-tools: kubectl
-          kubectl: '1.34.1'
+          kubectl: '1.28.0'
       - name: Assert kubectl-path output is set
         env:
           KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
@@ -25,7 +25,7 @@ jobs:
         env:
           KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
         run: |
-          echo "Checking kubectl binary at: $KUBECTL_PATH"
+          echo "Checking kubectl at: $KUBECTL_PATH"
           if [ ! -f "$KUBECTL_PATH" ]; then
             echo "FAIL: kubectl binary not found at $KUBECTL_PATH"
             exit 1
@@ -35,13 +35,15 @@ jobs:
             exit 1
           fi
           echo "PASS: kubectl binary exists and is executable"
-      - name: Assert kubectl version
+      - name: Assert kubectl version matches
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
         run: |
-          VERSION=$(kubectl version --client --output=json 2>/dev/null | grep -o '"gitVersion":"[^"]*"' | head -1 | cut -d'"' -f4 || kubectl version --client 2>&1 | grep -oP 'v[\d.]+' | head -1)
-          echo "kubectl version: $VERSION"
-          if echo "$VERSION" | grep -q "1.34"; then
-            echo "PASS: kubectl version matches expected 1.34.x"
+          VERSION=$("$KUBECTL_PATH" version --client 2>&1 | head -3)
+          echo "kubectl version output: $VERSION"
+          if echo "$VERSION" | grep -q "1.28"; then
+            echo "PASS: kubectl version contains 1.28"
           else
-            echo "FAIL: kubectl version does not match expected 1.34.x, got: $VERSION"
+            echo "FAIL: kubectl version does not contain 1.28, got: $VERSION"
             exit 1
           fi

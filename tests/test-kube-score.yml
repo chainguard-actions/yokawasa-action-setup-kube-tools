@@ -1,0 +1,49 @@
+name: Test kube-score setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: kube-score
+          kube-score: '1.17.0'
+      - name: Assert kube-score-path output is set
+        env:
+          KUBE_SCORE_PATH: ${{ steps.action.outputs.kube-score-path }}
+        run: |
+          echo "kube-score-path: $KUBE_SCORE_PATH"
+          if [ -z "$KUBE_SCORE_PATH" ]; then
+            echo "FAIL: kube-score-path output is empty"
+            exit 1
+          fi
+          echo "PASS: kube-score-path is set to $KUBE_SCORE_PATH"
+      - name: Assert kube-score binary exists and is executable
+        env:
+          KUBE_SCORE_PATH: ${{ steps.action.outputs.kube-score-path }}
+        run: |
+          echo "Checking kube-score at: $KUBE_SCORE_PATH"
+          if [ ! -f "$KUBE_SCORE_PATH" ]; then
+            echo "FAIL: kube-score binary not found at $KUBE_SCORE_PATH"
+            exit 1
+          fi
+          if [ ! -x "$KUBE_SCORE_PATH" ]; then
+            echo "FAIL: kube-score binary is not executable"
+            exit 1
+          fi
+          echo "PASS: kube-score binary exists and is executable"
+      - name: Assert kube-score version matches
+        env:
+          KUBE_SCORE_PATH: ${{ steps.action.outputs.kube-score-path }}
+        run: |
+          VERSION=$("$KUBE_SCORE_PATH" version 2>&1)
+          echo "kube-score version: $VERSION"
+          if echo "$VERSION" | grep -q "1.17"; then
+            echo "PASS: kube-score version contains 1.17"
+          else
+            echo "FAIL: kube-score version does not contain 1.17, got: $VERSION"
+            exit 1
+          fi

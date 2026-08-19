@@ -10,22 +10,20 @@ jobs:
         uses: .
         with:
           setup-tools: |
-            kubectl
+            helm
             yq
-            kustomize
-          kubectl: '1.34.1'
-          yq: '4.47.2'
-          kustomize: '5.7.1'
-      - name: Assert kubectl-path output is set
+          helm: '3.13.0'
+          yq: '4.35.2'
+      - name: Assert helm-path output is set
         env:
-          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
         run: |
-          echo "kubectl-path: $KUBECTL_PATH"
-          if [ -z "$KUBECTL_PATH" ]; then
-            echo "FAIL: kubectl-path output is empty"
+          echo "helm-path: $HELM_PATH"
+          if [ -z "$HELM_PATH" ]; then
+            echo "FAIL: helm-path output is empty"
             exit 1
           fi
-          echo "PASS: kubectl-path is set"
+          echo "PASS: helm-path is set to $HELM_PATH"
       - name: Assert yq-path output is set
         env:
           YQ_PATH: ${{ steps.action.outputs.yq-path }}
@@ -35,40 +33,44 @@ jobs:
             echo "FAIL: yq-path output is empty"
             exit 1
           fi
-          echo "PASS: yq-path is set"
-      - name: Assert kustomize-path output is set
-        env:
-          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
-        run: |
-          echo "kustomize-path: $KUSTOMIZE_PATH"
-          if [ -z "$KUSTOMIZE_PATH" ]; then
-            echo "FAIL: kustomize-path output is empty"
-            exit 1
-          fi
-          echo "PASS: kustomize-path is set"
-      - name: Assert tools not requested have empty paths
+          echo "PASS: yq-path is set to $YQ_PATH"
+      - name: Assert helm binary works
         env:
           HELM_PATH: ${{ steps.action.outputs.helm-path }}
-          CONFTEST_PATH: ${{ steps.action.outputs.conftest-path }}
         run: |
-          echo "helm-path: $HELM_PATH"
-          echo "conftest-path: $CONFTEST_PATH"
-          if [ -n "$HELM_PATH" ]; then
-            echo "FAIL: helm-path should be empty when helm not in setup-tools, got: $HELM_PATH"
-            exit 1
-          fi
-          if [ -n "$CONFTEST_PATH" ]; then
-            echo "FAIL: conftest-path should be empty when conftest not in setup-tools, got: $CONFTEST_PATH"
-            exit 1
-          fi
-          echo "PASS: non-requested tools have empty paths"
-      - name: Assert yq binary works
-        run: |
-          VERSION=$(yq --version 2>&1)
-          echo "yq version: $VERSION"
-          if echo "$VERSION" | grep -q "4.47"; then
-            echo "PASS: yq version matches expected 4.47.x"
+          VERSION=$("$HELM_PATH" version --short 2>&1)
+          echo "helm version: $VERSION"
+          if echo "$VERSION" | grep -q "3.13"; then
+            echo "PASS: helm version contains 3.13"
           else
-            echo "FAIL: yq version does not match expected 4.47.x, got: $VERSION"
+            echo "FAIL: helm version does not contain 3.13, got: $VERSION"
             exit 1
           fi
+      - name: Assert yq binary works
+        env:
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          VERSION=$("$YQ_PATH" --version 2>&1)
+          echo "yq version: $VERSION"
+          if echo "$VERSION" | grep -q "4.35"; then
+            echo "PASS: yq version contains 4.35"
+          else
+            echo "FAIL: yq version does not contain 4.35, got: $VERSION"
+            exit 1
+          fi
+      - name: Assert non-selected tools are not set up
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+        run: |
+          echo "kubectl-path: $KUBECTL_PATH"
+          echo "kustomize-path: $KUSTOMIZE_PATH"
+          if [ -n "$KUBECTL_PATH" ]; then
+            echo "FAIL: kubectl-path should be empty when not in setup-tools"
+            exit 1
+          fi
+          if [ -n "$KUSTOMIZE_PATH" ]; then
+            echo "FAIL: kustomize-path should be empty when not in setup-tools"
+            exit 1
+          fi
+          echo "PASS: non-selected tools have empty paths"

@@ -1,0 +1,49 @@
+name: Test skaffold setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: skaffold
+          skaffold: '2.8.0'
+      - name: Assert skaffold-path output is set
+        env:
+          SKAFFOLD_PATH: ${{ steps.action.outputs.skaffold-path }}
+        run: |
+          echo "skaffold-path: $SKAFFOLD_PATH"
+          if [ -z "$SKAFFOLD_PATH" ]; then
+            echo "FAIL: skaffold-path output is empty"
+            exit 1
+          fi
+          echo "PASS: skaffold-path is set to $SKAFFOLD_PATH"
+      - name: Assert skaffold binary exists and is executable
+        env:
+          SKAFFOLD_PATH: ${{ steps.action.outputs.skaffold-path }}
+        run: |
+          echo "Checking skaffold at: $SKAFFOLD_PATH"
+          if [ ! -f "$SKAFFOLD_PATH" ]; then
+            echo "FAIL: skaffold binary not found at $SKAFFOLD_PATH"
+            exit 1
+          fi
+          if [ ! -x "$SKAFFOLD_PATH" ]; then
+            echo "FAIL: skaffold binary is not executable"
+            exit 1
+          fi
+          echo "PASS: skaffold binary exists and is executable"
+      - name: Assert skaffold version matches
+        env:
+          SKAFFOLD_PATH: ${{ steps.action.outputs.skaffold-path }}
+        run: |
+          VERSION=$("$SKAFFOLD_PATH" version 2>&1)
+          echo "skaffold version: $VERSION"
+          if echo "$VERSION" | grep -q "2.8"; then
+            echo "PASS: skaffold version contains 2.8"
+          else
+            echo "FAIL: skaffold version does not contain 2.8, got: $VERSION"
+            exit 1
+          fi
