@@ -14,6 +14,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v0.13.4 | [`v0.13.4`](https://github.com/chainguard-actions/yokawasa-action-setup-kube-tools/tree/v0.13.4) | [`5778123`](https://github.com/yokawasa/action-setup-kube-tools/commit/5778123f7b071387e9c8e522492d8f39427dc6c7) |
 | v0.13.5 | [`v0.13.5`](https://github.com/chainguard-actions/yokawasa-action-setup-kube-tools/tree/v0.13.5) | [`9d39563`](https://github.com/yokawasa/action-setup-kube-tools/commit/9d39563c24d4a419d1a8289c34d6da5a6171252c) |
 | v0.14.0 | [`v0.14.0`](https://github.com/chainguard-actions/yokawasa-action-setup-kube-tools/tree/v0.14.0) | [`b16d49b`](https://github.com/yokawasa/action-setup-kube-tools/commit/b16d49b2c459d33cf9d4c300a220ef0bcdbc730a) |
+| v0.14.1 | [`v0.14.1`](https://github.com/chainguard-actions/yokawasa-action-setup-kube-tools/tree/v0.14.1) | [`f8b2f6c`](https://github.com/yokawasa/action-setup-kube-tools/commit/f8b2f6cdd1eb8575530049beacfe5d04c0ea8944) |
 
 ## Privacy
 
