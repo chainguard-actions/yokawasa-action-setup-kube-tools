@@ -1,0 +1,46 @@
+name: Test dev tools (rancher, tilt, skaffold) with explicit versions
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            rancher
+            tilt
+            skaffold
+          rancher: 2.13.3
+          tilt: 0.37.0
+          skaffold: 2.18.1
+      - name: Assert tool paths and versions
+        env:
+          RANCHER_PATH: ${{ steps.action.outputs.rancher-path }}
+          TILT_PATH: ${{ steps.action.outputs.tilt-path }}
+          SKAFFOLD_PATH: ${{ steps.action.outputs.skaffold-path }}
+        run: |
+          echo "rancher-path: $RANCHER_PATH"
+          echo "tilt-path: $TILT_PATH"
+          echo "skaffold-path: $SKAFFOLD_PATH"
+          for p in "$RANCHER_PATH" "$TILT_PATH" "$SKAFFOLD_PATH"; do
+            if [ -z "$p" ] || [ ! -x "$p" ]; then
+              echo "FAIL: path '$p' is empty or not executable"
+              exit 1
+            fi
+          done
+          V="$("$RANCHER_PATH" --version 2>&1)"; echo "$V"
+          echo "$V" | grep -q "2.13.3" || { echo "FAIL: rancher version mismatch"; exit 1; }
+          V="$("$TILT_PATH" version 2>&1)"; echo "$V"
+          echo "$V" | grep -q "0.37.0" || { echo "FAIL: tilt version mismatch"; exit 1; }
+          V="$("$SKAFFOLD_PATH" version 2>&1)"; echo "$V"
+          echo "$V" | grep -q "2.18.1" || { echo "FAIL: skaffold version mismatch"; exit 1; }
+          echo "PASS"
+      - name: Assert tools are on PATH
+        run: |
+          command -v rancher || { echo "FAIL: rancher not on PATH"; exit 1; }
+          command -v tilt || { echo "FAIL: tilt not on PATH"; exit 1; }
+          command -v skaffold || { echo "FAIL: skaffold not on PATH"; exit 1; }
+          echo "PASS"

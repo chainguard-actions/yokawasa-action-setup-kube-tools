@@ -1,0 +1,23 @@
+name: Test explicit input overrides version-file
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          version-file: tests/fixtures/tool-versions
+          setup-tools: yq
+          yq: 4.44.1
+      - name: Assert explicit yq version wins
+        env:
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "yq-path: $YQ_PATH"
+          [ -x "$YQ_PATH" ] || { echo "FAIL: yq not installed"; exit 1; }
+          YV="$("$YQ_PATH" --version 2>&1)"; echo "$YV"
+          echo "$YV" | grep -q "4.44.1" || { echo "FAIL: expected yq 4.44.1"; exit 1; }
+          echo "PASS"

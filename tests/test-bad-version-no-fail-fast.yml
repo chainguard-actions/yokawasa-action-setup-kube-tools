@@ -1,0 +1,30 @@
+name: Test bad version tolerated without fail-fast
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          fail-fast: 'false'
+          setup-tools: |
+            kube-score
+            yq
+          kube-score: 0.0.999
+          yq: 4.40.5
+      - name: Assert bad tool has empty path and good tool installed
+        env:
+          KS_PATH: ${{ steps.action.outputs.kube-score-path }}
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "kube-score-path: '$KS_PATH'"
+          echo "yq-path: '$YQ_PATH'"
+          if [ -n "$KS_PATH" ]; then
+            echo "FAIL: expected empty kube-score-path for bad version"
+            exit 1
+          fi
+          [ -x "$YQ_PATH" ] || { echo "FAIL: yq should still be installed"; exit 1; }
+          echo "PASS"

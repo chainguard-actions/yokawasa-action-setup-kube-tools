@@ -1,0 +1,80 @@
+name: 'Setup Kubernetes Tools'
+description: 'Setup Kubernetes tools: kubectl, kustomize, helm, kubeconform, conftest, yq, rancher, tilt, skaffold, kube-score'
+author: 'Yoichi Kawasaki @yokawasa'
+inputs:
+  fail-fast:
+    required: false
+    default: 'true'
+    description: 'the action immediately fails when it fails to download (ie. due to a bad version)'
+  arch-type:
+    required: false
+    description: 'Optional. The processor architecture type of the tool binary to setup. The action will auto-detect the architecture ("amd64" or "arm64") and use it as appropriate at runtime. Specify the architecture type ("amd64" or "arm64") only if you need to force it.'
+  setup-tools:
+    required: false
+    default: ''
+    description: 'List of tool name to setup. By default, the action download and setup all supported Kubernetes tools. By specifying "setup-tools" you can choose which tools the action setup. Supported separator is return in multi-line string. Supported tools are "kubectl", "kustomize", "helm", "kubeval", "kubeconform", "conftest", "yq", "rancher", "tilt", "skaffold", "kube-score"'
+  version-file:
+    required: false
+    default: ''
+    description: 'Optional. Path to a ".tool-versions" (asdf/mise) style file. For each supported tool that has an entry in the file, that version is used, unless the tool''s own version input is explicitly set. Resolution order is: explicit tool input > version-file entry > built-in default. Each line is "<tool> <version>"; "#" comments, blank lines, and unsupported tool names are ignored.'
+  kubectl:
+    required: false
+    description: "kubectl version or 'latest' (default: 1.35.3)"
+  kustomize:
+    required: false
+    description: "kustomize version or 'latest' (default: 5.8.1)"
+  helm:
+    required: false
+    description: "helm version or 'latest' (default: 3.20.1)"
+  kubeval:
+    required: false
+    description: "kubeval version or 'latest' (default: 0.16.1)"
+  kubeconform:
+    required: false
+    description: "kubeconform version or 'latest' (default: 0.7.0)"
+  conftest:
+    required: false
+    description: "conftest version or 'latest' (default: 0.67.1)"
+  yq:
+    required: false
+    description: "yq version or 'latest' (default: 4.52.5)"
+  rancher:
+    required: false
+    description: "rancher cli version or 'latest' (default: 2.13.3)"
+  tilt:
+    required: false
+    description: "tilt version or 'latest' (default: 0.37.0)"
+  skaffold:
+    required: false
+    description: "skaffold version or 'latest' (default: 2.18.1)"
+  kube-score:
+    required: false
+    description: "kube-score version or 'latest' (default: 1.20.0)"
+outputs:
+  kubectl-path:
+    description: 'kubectl command path if the action setup the tool, otherwise empty string'
+  kustomize-path:
+    description: 'kustomize command path if the action setup the tool, otherwise empty string'
+  helm-path:
+    description: 'helm command path if the action setup the tool, otherwise empty string'
+  kubeval-path:
+    description: 'kubeval command path if the action setup the tool, otherwise empty string'
+  conftest-path:
+    description: 'conftest command path if the action setup the tool, otherwise empty string'
+  yq-path:
+    description: 'yq command path if the action setup the tool, otherwise empty string'
+  rancher-path:
+    description: 'rancher cli command path if the action setup the tool, otherwise empty string'
+  tilt-path:
+    description: 'tilt command path if the action setup the tool, otherwise empty string'
+  skaffold-path:
+    description: 'skaffold command path if the action setup the tool, otherwise empty string'
+  kube-score-path:
+    description: 'kube-score command path if the action setup the tool, otherwise empty string'
+branding:
+  icon: 'terminal'
+  color: 'blue'
+runs:
+  pre: chainguard-phonehome.js
+  using: 'node24'
+  main: 'dist/index.mjs'

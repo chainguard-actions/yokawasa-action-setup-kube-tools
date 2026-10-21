@@ -1,0 +1,6 @@
+# asdf/mise style version file used by tests
+yq 4.40.5   # inline comment
+kustomize v5.3.0
+
+unsupported-tool 9.9.9
+kubeconform

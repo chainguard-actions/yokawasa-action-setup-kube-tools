@@ -1,0 +1,63 @@
+name: Test basic selected tools with explicit versions
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          setup-tools: |
+            kubectl
+            helm
+            yq
+          kubectl: v1.29.0
+          helm: 3.14.0
+          yq: 4.40.5
+      - name: Assert selected tool paths are set and binaries work
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+        run: |
+          echo "kubectl-path: $KUBECTL_PATH"
+          echo "helm-path: $HELM_PATH"
+          echo "yq-path: $YQ_PATH"
+          for p in "$KUBECTL_PATH" "$HELM_PATH" "$YQ_PATH"; do
+            if [ -z "$p" ] || [ ! -x "$p" ]; then
+              echo "FAIL: path '$p' is empty or not executable"
+              exit 1
+            fi
+          done
+          KV="$("$KUBECTL_PATH" version --client 2>&1)"
+          echo "$KV"
+          echo "$KV" | grep -q "v1.29.0" || { echo "FAIL: kubectl version mismatch"; exit 1; }
+          HV="$("$HELM_PATH" version --short 2>&1)"
+          echo "$HV"
+          echo "$HV" | grep -q "v3.14.0" || { echo "FAIL: helm version mismatch"; exit 1; }
+          YV="$("$YQ_PATH" --version 2>&1)"
+          echo "$YV"
+          echo "$YV" | grep -q "4.40.5" || { echo "FAIL: yq version mismatch"; exit 1; }
+          echo "PASS"
+      - name: Assert tools are on PATH
+        run: |
+          command -v kubectl || { echo "FAIL: kubectl not on PATH"; exit 1; }
+          command -v helm || { echo "FAIL: helm not on PATH"; exit 1; }
+          command -v yq || { echo "FAIL: yq not on PATH"; exit 1; }
+          echo "PASS"
+      - name: Assert unselected tools have empty outputs
+        env:
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+          CONFTEST_PATH: ${{ steps.action.outputs.conftest-path }}
+          SKAFFOLD_PATH: ${{ steps.action.outputs.skaffold-path }}
+        run: |
+          echo "kustomize-path: '$KUSTOMIZE_PATH'"
+          echo "conftest-path: '$CONFTEST_PATH'"
+          echo "skaffold-path: '$SKAFFOLD_PATH'"
+          if [ -n "$KUSTOMIZE_PATH" ] || [ -n "$CONFTEST_PATH" ] || [ -n "$SKAFFOLD_PATH" ]; then
+            echo "FAIL: unselected tools should have empty path outputs"
+            exit 1
+          fi
+          echo "PASS"

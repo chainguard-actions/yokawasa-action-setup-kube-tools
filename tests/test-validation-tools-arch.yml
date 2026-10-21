@@ -1,0 +1,66 @@
+name: Test validation tools with explicit arch-type and versions
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Detect runner architecture
+        id: arch
+        run: |
+          case "$(uname -m)" in
+            aarch64|arm64) echo "arch=arm64" >> "$GITHUB_OUTPUT" ;;
+            *) echo "arch=amd64" >> "$GITHUB_OUTPUT" ;;
+          esac
+      - id: action
+        uses: .
+        with:
+          arch-type: ${{ steps.arch.outputs.arch }}
+          setup-tools: |
+            kustomize
+            kubeval
+            kubeconform
+            conftest
+          kustomize: 5.8.1
+          kubeval: 0.16.1
+          kubeconform: 0.7.0
+          conftest: 0.67.1
+      - name: Assert tool paths and versions
+        env:
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+          KUBEVAL_PATH: ${{ steps.action.outputs.kubeval-path }}
+          CONFTEST_PATH: ${{ steps.action.outputs.conftest-path }}
+        run: |
+          echo "kustomize-path: $KUSTOMIZE_PATH"
+          echo "kubeval-path: $KUBEVAL_PATH"
+          echo "conftest-path: $CONFTEST_PATH"
+          for p in "$KUSTOMIZE_PATH" "$KUBEVAL_PATH" "$CONFTEST_PATH"; do
+            if [ -z "$p" ] || [ ! -x "$p" ]; then
+              echo "FAIL: path '$p' is empty or not executable"
+              exit 1
+            fi
+          done
+          V="$("$KUSTOMIZE_PATH" version 2>&1)"; echo "$V"
+          echo "$V" | grep -q "5.8.1" || { echo "FAIL: kustomize version mismatch"; exit 1; }
+          V="$("$CONFTEST_PATH" --version 2>&1)"; echo "$V"
+          echo "$V" | grep -q "0.67.1" || { echo "FAIL: conftest version mismatch"; exit 1; }
+          V="$("$KUBEVAL_PATH" --version 2>&1)"; echo "$V"
+          echo "$V" | grep -q "0.16.1" || { echo "FAIL: kubeval version mismatch"; exit 1; }
+          echo "PASS"
+      - name: Assert kubeconform on PATH
+        run: |
+          command -v kubeconform || { echo "FAIL: kubeconform not on PATH"; exit 1; }
+          V="$(kubeconform -v 2>&1)"; echo "$V"
+          echo "$V" | grep -q "0.7.0" || { echo "FAIL: kubeconform version mismatch"; exit 1; }
+          echo "PASS"
+      - name: Assert unselected tools have empty outputs
+        env:
+          KUBECTL_PATH: ${{ steps.action.outputs.kubectl-path }}
+          HELM_PATH: ${{ steps.action.outputs.helm-path }}
+        run: |
+          if [ -n "$KUBECTL_PATH" ] || [ -n "$HELM_PATH" ]; then
+            echo "FAIL: unselected tools should have empty outputs"
+            exit 1
+          fi
+          echo "PASS"

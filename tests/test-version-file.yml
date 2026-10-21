@@ -1,0 +1,31 @@
+name: Test version-file resolution
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          version-file: tests/fixtures/tool-versions
+          setup-tools: |
+            yq
+            kustomize
+      - name: Assert versions come from version-file
+        env:
+          YQ_PATH: ${{ steps.action.outputs.yq-path }}
+          KUSTOMIZE_PATH: ${{ steps.action.outputs.kustomize-path }}
+        run: |
+          echo "yq-path: $YQ_PATH"
+          echo "kustomize-path: $KUSTOMIZE_PATH"
+          [ -x "$YQ_PATH" ] || { echo "FAIL: yq not installed"; exit 1; }
+          [ -x "$KUSTOMIZE_PATH" ] || { echo "FAIL: kustomize not installed"; exit 1; }
+          case "$YQ_PATH" in *4.40.5*) ;; *) echo "FAIL: yq path lacks version 4.40.5"; exit 1;; esac
+          case "$KUSTOMIZE_PATH" in *5.3.0*) ;; *) echo "FAIL: kustomize path lacks version 5.3.0"; exit 1;; esac
+          YV="$("$YQ_PATH" --version 2>&1)"; echo "$YV"
+          echo "$YV" | grep -q "4.40.5" || { echo "FAIL: yq version mismatch"; exit 1; }
+          KV="$("$KUSTOMIZE_PATH" version 2>&1)"; echo "$KV"
+          echo "$KV" | grep -q "5.3.0" || { echo "FAIL: kustomize version mismatch"; exit 1; }
+          echo "PASS"
