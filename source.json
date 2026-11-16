@@ -4,8 +4,13 @@
   "version": "v0.14.1",
   "commit_sha": "f8b2f6cdd1eb8575530049beacfe5d04c0ea8944",
   "url": "https://github.com/yokawasa/action-setup-kube-tools",
-  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "policy_sha": "374911c4be584df24e6da57af2d990570ef0f859",
   "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
   "test_agent_version": "2",
-  "harden_agent_version": "2"
+  "harden_agent_version": "2",
+  "dist_artifact": {
+    "gcs_uri": "gs://patch-actions-node-artifacts/dist-artifacts/yokawasa/action-setup-kube-tools/v0.14.1/sha256-9d976c1468bfe3380c282f28d33341c4597fc5a4d1426413c36d40c44b002387.tar.gz",
+    "sha256": "9d976c1468bfe3380c282f28d33341c4597fc5a4d1426413c36d40c44b002387",
+    "size_bytes": 52041
+  }
 }
